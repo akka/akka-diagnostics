@@ -95,8 +95,7 @@ object StarvationDetectorSettings {
       config.getString("thread-traces-limit") match {
         case "infinite" => Integer.MAX_VALUE
         case x          => x.toInt
-      }
-    )
+      })
   }
 
   /** INTERNAL API */
