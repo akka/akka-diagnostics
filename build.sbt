@@ -43,6 +43,7 @@ lazy val addonsTestkit = akkaAddonsModule("addons-testkit")
 
 lazy val docs = akkaAddonsModule("docs")
   .enablePlugins(AkkaParadoxPlugin, ParadoxSitePlugin, PreprocessPlugin, PublishRsyncPlugin)
+  .settings(dontPublish)
   .settings(
       name := "Akka Diagnostics",
       publish / skip := true,
@@ -63,8 +64,6 @@ lazy val docs = akkaAddonsModule("docs")
           "scala.binaryVersion" -> scalaBinaryVersion.value,
           "extref.scaladoc.base_url" -> s"/${(Preprocess / siteSubdirName).value}/",
           "extref.javadoc.base_url" -> s"/japi/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
-          "scaladoc.akka.cluster.fastfailover.base_url" -> s"/api/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
-          "javadoc.akka.cluster.fastfailover.base_url" -> s"/japi/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
           "scaladoc.akka.persistence.gdpr.base_url" -> s"/api/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
           "extref.akka.base_url" -> s"https://doc.akka.io/docs/akka/${Dependencies.Akka.partialVersion}/%s",
           "scaladoc.akka.base_url" -> s"https://doc.akka.io/api/akka/${Dependencies.Akka.partialVersion}",
@@ -80,20 +79,6 @@ lazy val docs = akkaAddonsModule("docs")
       publishRsyncHost := "akkarepo@gustav.akka.io",
       resolvers += Resolver.jcenterRepo // required to resolve paradox-theme-akka
   )
-  .dependsOn(fastFailover)
-
-lazy val fastFailover = akkaAddonsModule("akka-fast-failover")
-  .settings(
-      Dependencies.akkaFastFailover,
-      Protobuf.settings)
-  .settings(Release.settings: _*)
-  .enablePlugins(BootstrapGenjavadoc)
-  .dependsOn(addonsTestkit % "test")
-  .addAkkaModuleDependency("akka-protobuf")
-  .addAkkaModuleDependency("akka-actor")
-  .addAkkaModuleDependency("akka-remote")
-  .addAkkaModuleDependency("akka-testkit", "test")
-  .addAkkaModuleDependency("akka-cluster-sharding", "test")
 
 def akkaAddonsModule(name: String): Project =
     Project(id = name.replace("/", "-"), base = file(name))
