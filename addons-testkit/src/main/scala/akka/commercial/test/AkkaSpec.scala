@@ -60,10 +60,10 @@ object AkkaSpec {
       .dropWhile(!_.startsWith(startFrom))
       // then continue to the next entry after classToStartFrom that makes sense
       .dropWhile {
-        case `startFrom`                            => true
+        case `startFrom` => true
         case str if str.startsWith(startFrom + "$") => true // lambdas inside startFrom etc
-        case str if isAbstractClass(str)            => true
-        case _                                      => false
+        case str if isAbstractClass(str) => true
+        case _ => false
       }
 
     if (filteredStack.isEmpty)

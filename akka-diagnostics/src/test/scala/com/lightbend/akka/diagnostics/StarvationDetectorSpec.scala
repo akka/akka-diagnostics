@@ -53,8 +53,7 @@ class StarvationDetectorSpec extends AkkaSpec(
           fixed-pool-size = $numThreads
         }
       }
-    """
-) {
+    """) {
   "The StarvationDetector" should {
     def testsExecutor(dispatcherId: String): Unit = s"support $dispatcherId" should {
       implicit val dispatcher = system.dispatchers.lookup(dispatcherId)

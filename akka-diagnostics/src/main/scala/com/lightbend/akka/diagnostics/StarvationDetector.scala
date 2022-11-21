@@ -49,35 +49,35 @@ abstract class StarvationDetectorSettings { _: StarvationDetectorSettings.Starva
 }
 object StarvationDetectorSettings {
   def apply(
-    checkInterval:            FiniteDuration,
-    initialDelay:             FiniteDuration,
+    checkInterval: FiniteDuration,
+    initialDelay: FiniteDuration,
     maxDelayWarningThreshold: FiniteDuration,
-    warningInterval:          FiniteDuration): StarvationDetectorSettings =
+    warningInterval: FiniteDuration): StarvationDetectorSettings =
     apply(checkInterval, initialDelay, maxDelayWarningThreshold, warningInterval, 5)
 
   def apply(
-    checkInterval:            FiniteDuration,
-    initialDelay:             FiniteDuration,
+    checkInterval: FiniteDuration,
+    initialDelay: FiniteDuration,
     maxDelayWarningThreshold: FiniteDuration,
-    warningInterval:          FiniteDuration,
-    threadTraceLimit:         Int): StarvationDetectorSettings =
+    warningInterval: FiniteDuration,
+    threadTraceLimit: Int): StarvationDetectorSettings =
     StarvationDetectorSettingsImpl(checkInterval, initialDelay, maxDelayWarningThreshold, warningInterval, threadTraceLimit)
 
   /** Java API */
   def create(
-    checkInterval:            FiniteDuration,
-    initialDelay:             FiniteDuration,
+    checkInterval: FiniteDuration,
+    initialDelay: FiniteDuration,
     maxDelayWarningThreshold: FiniteDuration,
-    warningInterval:          FiniteDuration): StarvationDetectorSettings =
+    warningInterval: FiniteDuration): StarvationDetectorSettings =
     apply(checkInterval, initialDelay, maxDelayWarningThreshold, warningInterval)
 
   /** Java API */
   def create(
-    checkInterval:            FiniteDuration,
-    initialDelay:             FiniteDuration,
+    checkInterval: FiniteDuration,
+    initialDelay: FiniteDuration,
     maxDelayWarningThreshold: FiniteDuration,
-    warningInterval:          FiniteDuration,
-    threadTraceLimit:         Int): StarvationDetectorSettings =
+    warningInterval: FiniteDuration,
+    threadTraceLimit: Int): StarvationDetectorSettings =
     apply(checkInterval, initialDelay, maxDelayWarningThreshold, warningInterval, threadTraceLimit)
 
   def fromConfig(config: Config): StarvationDetectorSettings = {
@@ -94,18 +94,18 @@ object StarvationDetectorSettings {
       finiteDuration("warning-interval"),
       config.getString("thread-traces-limit") match {
         case "infinite" => Integer.MAX_VALUE
-        case x          => x.toInt
+        case x => x.toInt
       })
   }
 
   /** INTERNAL API */
   @InternalApi
   private[StarvationDetectorSettings] final case class StarvationDetectorSettingsImpl(
-    checkInterval:            FiniteDuration,
-    initialDelay:             FiniteDuration,
+    checkInterval: FiniteDuration,
+    initialDelay: FiniteDuration,
     maxDelayWarningThreshold: FiniteDuration,
-    warningInterval:          FiniteDuration,
-    threadTraceLimit:         Int) extends StarvationDetectorSettings {
+    warningInterval: FiniteDuration,
+    threadTraceLimit: Int) extends StarvationDetectorSettings {
   }
 }
 
@@ -138,9 +138,9 @@ object StarvationDetector {
    * to shutdown the starvation detector thread.
    */
   def checkExecutionContext(
-    ec:            ExecutionContext,
-    log:           LoggingAdapter,
-    config:        StarvationDetectorSettings,
+    ec: ExecutionContext,
+    log: LoggingAdapter,
+    config: StarvationDetectorSettings,
     hasTerminated: () => Boolean): Unit =
     if (config.isEnabled) {
       val thread = new StarvationDetectorThread(ec, log, config, hasTerminated)
@@ -158,9 +158,9 @@ object StarvationDetector {
    * to shutdown the starvation detector thread.
    */
   def checkExecutionContext(
-    ec:            ExecutionContext,
-    log:           LoggingAdapter,
-    config:        StarvationDetectorSettings,
+    ec: ExecutionContext,
+    log: LoggingAdapter,
+    config: StarvationDetectorSettings,
     hasTerminated: BooleanSupplier): Unit =
     checkExecutionContext(ec, log, config, hasTerminated.getAsBoolean _)
 
@@ -171,9 +171,9 @@ object StarvationDetector {
    */
   @InternalApi
   private[akka] class StarvationDetectorThread(
-    ec:            ExecutionContext,
-    log:           LoggingAdapter,
-    config:        StarvationDetectorSettings,
+    ec: ExecutionContext,
+    log: LoggingAdapter,
+    config: StarvationDetectorSettings,
     hasTerminated: () => Boolean) extends Thread {
     import config._
 
@@ -269,7 +269,7 @@ object StarvationDetector {
     private def statusOf(thread: Thread): ThreadStatus = ThreadStatus(thread, thread.getState, thread.getStackTrace)
     private def threadsOfExecutor(ec: ExecutionContext): Seq[Thread] = ec match {
       case x: Dispatcher => threadsOfExecutorService(getDispatcherES(x).executor)
-      case _             => Nil
+      case _ => Nil
     }
     private def threadsOfExecutorService(es: ExecutorService): Seq[Thread] = threadNamePrefix(es) match {
       case Some(prefix) =>
@@ -290,10 +290,10 @@ object StarvationDetector {
         throw UnsupportedDispatcherException(s"Failed to extract thread prefix, unsupported executor service type [${es.getClass.toString}], starvation will not be detected for this dispatcher.")
     }
     private def threadNamePrefix(es: ExecutorService): Option[String] = es match {
-      case ak: AkkaForkJoinPool     => Some(getAkkaFJPFactory(ak).name)
-      case tpe: ThreadPoolExecutor  => Some(getThreadPoolExecutorFactory(tpe).name)
+      case ak: AkkaForkJoinPool => Some(getAkkaFJPFactory(ak).name)
+      case tpe: ThreadPoolExecutor => Some(getThreadPoolExecutorFactory(tpe).name)
       case ap: AffinityPoolAccessor => Some(getAffinityPoolFactory(ap).name)
-      case _                        => None
+      case _ => None
     }
     private def isSleepingFJThread(trace: StackTrace): Boolean =
       trace.length >= 2 &&
@@ -369,9 +369,9 @@ object StarvationDetector {
 
   private type StackTraceFilter = Seq[StackTraceElement] => Boolean
   private case class Problem(
-    name:             String,
-    description:      String,
-    uri:              Option[String],
+    name: String,
+    description: String,
+    uri: Option[String],
     stackTraceFilter: StackTraceFilter)
   private object Problem {
     val WellKnownProblems: Seq[Problem] = Seq(

@@ -1,6 +1,8 @@
 addSbtPlugin("com.typesafe.sbt" % "sbt-multi-jvm" % "0.4.0")
 addSbtPlugin("org.scalariform" % "sbt-scalariform" % "1.8.2")
-addSbtPlugin("com.eed3si9n" % "sbt-unidoc" % "0.4.2")
+addSbtPlugin("com.github.sbt" % "sbt-unidoc" % "0.5.0")
+addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.4.3")
+
 
 addSbtPlugin("com.lightbend.akka" % "sbt-paradox-akka" % "0.32")
 addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.4.0")
