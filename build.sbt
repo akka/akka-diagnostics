@@ -7,7 +7,13 @@ import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import Dependencies.{ Scala211, Scala212, Scala213, buildScalaVersion }
 
 
-lazy val root = Project(id = "akka-diagnostics", file("akka-diagnostics"))
+lazy val root = (project in file("."))
+  .settings(
+    name := "akka-diagnostics-root"
+  )
+  .aggregate(`akka-diagnostics`, docs)
+
+lazy val `akka-diagnostics` = Project(id = "akka-diagnostics", file("akka-diagnostics"))
   .settings(defaultSettings)
   .settings(
     Dependencies.akkaDiagnostics)
