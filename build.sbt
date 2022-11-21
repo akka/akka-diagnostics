@@ -15,7 +15,6 @@ lazy val root = (project in file("."))
 
 lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
   .settings(Dependencies.akkaDiagnostics)
-  .settings(Release.settings: _*)
   .enablePlugins(BootstrapGenjavadoc, UnidocRoot)
   .dependsOn(addonsTestkit % "test")
   .addAkkaModuleDependency("akka-actor")
@@ -118,12 +117,6 @@ lazy val defaultSettings = Dependencies.Versions ++ Seq(
         "-skip-packages",
         "akka.pattern" // for some reason Scaladoc creates this
     ),
-
-    // allow for silencing fatal warnings where they have reasons (tm)
-    libraryDependencies ++= Seq(
-        compilerPlugin(
-            ("com.github.ghik" %% "silencer-plugin" % silencerVersion).cross(CrossVersion.patch)),
-        ("com.github.ghik" %% "silencer-lib" % silencerVersion % Provided).cross(CrossVersion.patch)),
 
     // -XDignore.symbol.file suppresses sun.misc.Unsafe warnings
     Compile / javacOptions ++= Seq("-parameters", "-encoding", "UTF-8", "-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-XDignore.symbol.file"),
