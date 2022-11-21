@@ -100,29 +100,6 @@ object Dependencies {
   // == dependencies for individual modules ==
   // Akka dependencies are added on each project using `addAkkaModuleDependency` to depend on akka sources more easily
 
-  val akkaSplitBrainResolver = libraryDependencies ++= Seq(
-    TestDeps.levelDB,
-    TestDeps.commonsIo) ++ TestDeps.commonTestDeps
-
-  val akkaGdprJackson = libraryDependencies ++= Seq(
-    jacksonCore,
-    jacksonDatabind,
-    jacksonAnnotations % "test",
-    jacksonScala % "test",
-    jacksonJdk8 % "test",
-    jacksonJsr310 % "test",
-    jacksonParameterNames % "test",
-    jacksonAfterburner % "test",
-    jacksonSmile % "test",
-    jacksonCbor % "test") ++ TestDeps.commonTestDeps
-
-  val akkaPersistenceMultiDcTestkit = libraryDependencies ++= Seq(
-    persistenceCassandraLauncher,
-    streamContrib
-  ) ++ TestDeps.commonTestDeps
-
-  val akkaPersistenceMultiDcTests = libraryDependencies ++=
-    TestDeps.commonTestDeps
 
   val akkaDiagnostics = libraryDependencies ++= Seq(
     commonsLang, // for levenshtein distance impl

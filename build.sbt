@@ -14,7 +14,6 @@ lazy val root = (project in file("."))
   .aggregate(`akka-diagnostics`, docs)
 
 lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
-  .settings(defaultSettings)
   .settings(
     Dependencies.akkaDiagnostics)
   .settings(Release.settings: _*)
