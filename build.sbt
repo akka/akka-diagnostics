@@ -60,7 +60,7 @@ lazy val docs = akkaAddonsModule("docs")
           "version" -> version.value,
           "project.url" -> "https://doc.akka.io/docs/akka-diagnostics/current/",
           "canonical.base_url" -> "https://doc.akka.io/docs/akka-diagnostics/current",
-          "akka.version26" -> Dependencies.Akka.version26,
+          "akka.version27" -> Dependencies.Akka.version27,
           "scala.binaryVersion" -> scalaBinaryVersion.value,
           "extref.scaladoc.base_url" -> s"/${(Preprocess / siteSubdirName).value}/",
           "extref.javadoc.base_url" -> s"/japi/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
