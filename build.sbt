@@ -18,7 +18,7 @@ lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
   .settings(
     Dependencies.akkaDiagnostics)
   .settings(Release.settings: _*)
-  .enablePlugins(BootstrapGenjavadoc, UnidocRoot, NoPublish)
+  .enablePlugins(BootstrapGenjavadoc, UnidocRoot)
   .dependsOn(
     addonsTestkit % "test"
     // so that the tests can check the sbr config
@@ -45,7 +45,6 @@ lazy val addonsTestkit = akkaAddonsModule("addons-testkit")
       Dependencies.testkit
   )
   .addAkkaModuleDependency("akka-testkit")
-  .enablePlugins(NoPublish)
 
 lazy val docs = akkaAddonsModule("docs")
   .enablePlugins(AkkaParadoxPlugin, ParadoxSitePlugin, PreprocessPlugin, PublishRsyncPlugin)
