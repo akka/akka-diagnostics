@@ -75,7 +75,7 @@ lazy val docs = akkaAddonsModule("docs")
       paradoxRoots := List("index.html", "release-notes.html",
           // https://github.com/lightbend/paradox/issues/350
           "includes/common.html", "includes/proprietary.html"),
-      unmanagedSourceDirectories in ScalariformKeys.format in Test := (unmanagedSourceDirectories in Test).value,
+      Test / ScalariformKeys.format / unmanagedSourceDirectories := (Test / unmanagedSourceDirectories).value,
       publishRsyncArtifact := makeSite.value -> "www/",
       publishRsyncHost := "akkarepo@gustav.akka.io",
       resolvers += Resolver.jcenterRepo // required to resolve paradox-theme-akka
@@ -122,7 +122,7 @@ lazy val defaultSettings = Dependencies.Versions ++ Seq(
         case _ => Seq("-Ywarn-unused-import")
     }),
     Compile / scalacOptions  ++= (if (allWarnings) Seq("-deprecation") else Nil),
-    Test / scalacOptions := (scalacOptions in Test).value.filterNot(opt =>
+    Test / scalacOptions := (Test / scalacOptions).value.filterNot(opt =>
         opt == "-Xlog-reflective-calls" || opt.contains("genjavadoc") || opt == "-Xfatal-warnings"),
     Compile / doc / scalacOptions -= "-Xfatal-warnings", // no fatal warning for scaladoc yet
     Compile / doc / scalacOptions ++= Seq(
@@ -141,24 +141,24 @@ lazy val defaultSettings = Dependencies.Versions ++ Seq(
         ("com.github.ghik" %% "silencer-lib" % silencerVersion % Provided).cross(CrossVersion.patch)),
 
     // -XDignore.symbol.file suppresses sun.misc.Unsafe warnings
-    javacOptions in compile ++= Seq("-parameters", "-encoding", "UTF-8", "-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-XDignore.symbol.file"),
-    javacOptions in compile ++= (if (allWarnings) Seq("-Xlint:deprecation") else Nil),
-    javacOptions in doc ++= Seq(),
+    Compile / javacOptions ++= Seq("-parameters", "-encoding", "UTF-8", "-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-XDignore.symbol.file"),
+    Compile / javacOptions ++= (if (allWarnings) Seq("-Xlint:deprecation") else Nil),
+    doc / javacOptions ++= Seq(),
 
     crossVersion := CrossVersion.binary,
 
-    ivyLoggingLevel in ThisBuild := UpdateLogging.Quiet,
+    ThisBuild / ivyLoggingLevel := UpdateLogging.Quiet,
 
     homepage := Some(url("https://akka.io/")),
     publishMavenStyle := true,
 
     // test settings
-    parallelExecution in GlobalScope := System.getProperty("akka.parallelExecution", false.toString).toBoolean,
-    parallelExecution in Test := System.getProperty("akka.parallelExecution", false.toString).toBoolean,
-    logBuffered in Test := System.getProperty("akka.logBufferedTests", "false").toBoolean,
+    GlobalScope / parallelExecution := System.getProperty("akka.parallelExecution", false.toString).toBoolean,
+    Test / parallelExecution := System.getProperty("akka.parallelExecution", false.toString).toBoolean,
+    Test / logBuffered := System.getProperty("akka.logBufferedTests", "false").toBoolean,
 
     // show full stack traces and test case durations
-    testOptions in Test += Tests.Argument("-oDF"),
+    Test / testOptions += Tests.Argument("-oDF"),
 
     // -v Log "test run started" / "test started" / "test run finished" events on log level "info" instead of "debug".
     // -a Show stack traces and exception class name for AssertionErrors.
