@@ -1,6 +1,4 @@
 import akka._
-import com.typesafe.sbt.SbtScalariform.ScalariformKeys
-import com.lightbend.paradox.sbt.ParadoxPlugin
 import akka.AkkaDependency.RichProject
 import Dependencies.{ Scala212, Scala213, buildScalaVersion }
 
@@ -72,8 +70,7 @@ lazy val docs = akkaAddonsModule("docs")
       paradoxRoots := List("index.html", "release-notes.html",
           // https://github.com/lightbend/paradox/issues/350
           "includes/common.html", "includes/proprietary.html"),
-      Test / ScalariformKeys.format / unmanagedSourceDirectories := (Test / unmanagedSourceDirectories).value,
-      publishRsyncArtifact := makeSite.value -> "www/",
+      publishRsyncArtifacts += makeSite.value -> "www/",
       publishRsyncHost := "akkarepo@gustav.akka.io",
       resolvers += Resolver.jcenterRepo // required to resolve paradox-theme-akka
   )
