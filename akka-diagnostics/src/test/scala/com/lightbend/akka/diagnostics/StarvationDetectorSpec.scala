@@ -26,8 +26,7 @@ import com.lightbend.akka.diagnostics.StarvationDetector.StarvationDetectorThrea
 
 import scala.concurrent.ExecutionContext
 
-class StarvationDetectorSpec extends AkkaSpec(
-  s"""akka.diagnostics.recorder.enabled = off
+class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enabled = off
       akka.diagnostics.starvation-detector.check-interval              = 100ms # check more often
       akka.diagnostics.starvation-detector.initial-delay               = 0     # no initial delay
       akka.diagnostics.starvation-detector.max-delay-warning-threshold = 10ms  # make check tighter
@@ -59,8 +58,12 @@ class StarvationDetectorSpec extends AkkaSpec(
       implicit val dispatcher = system.dispatchers.lookup(dispatcherId)
       // default dispatcher is already checked out of the box
       if (dispatcherId != DefaultDispatcherId) {
-        StarvationDetector.checkExecutionContext(dispatcher, system.log, StarvationDetectorSettings.fromConfig(
-          system.settings.config.getConfig("akka.diagnostics.starvation-detector")), () => system.whenTerminated.isCompleted)
+        StarvationDetector.checkExecutionContext(
+          dispatcher,
+          system.log,
+          StarvationDetectorSettings.fromConfig(
+            system.settings.config.getConfig("akka.diagnostics.starvation-detector")),
+          () => system.whenTerminated.isCompleted)
       }
       "log a warning if the dispatcher is busy for long periods of time" should {
         AntiPatterns.foreach {
@@ -77,23 +80,26 @@ class StarvationDetectorSpec extends AkkaSpec(
               resetWarningInterval()
 
               val pattern = s"(?s)Exceedingly long scheduling time on ExecutionContext.*\\Q$expected\\E.*".r
-              EventFilter.custom({
-                case Logging.Warning(_, _, message: String) =>
+              EventFilter
+                .custom(
+                  {
+                    case Logging.Warning(_, _, message: String) =>
+                      if (pattern.findFirstIn(message).isEmpty) {
+                        println(s"Unexpected warning: \n$message")
+                        false
+                      } else if (message.contains("total 0 thread")) {
+                        println(s"Detector logged warning but it does not contain any thread stacks:\n$message")
+                        false
+                      } else true
 
-                  if (pattern.findFirstIn(message).isEmpty) {
-                    println(s"Unexpected warning: \n$message")
-                    false
-                  } else if (message.contains("total 0 thread")) {
-                    println(s"Detector logged warning but it does not contain any thread stacks:\n$message")
-                    false
-                  } else true
+                  },
+                  occurrences = 1)
+                .intercept {
+                  val numIterations = 2 // 5 * numThreads  iterations * 2 tasks * 100ms / numThreads = 2 seconds run time
 
-              }, occurrences = 1).intercept {
-                val numIterations = 2 // 5 * numThreads  iterations * 2 tasks * 100ms / numThreads = 2 seconds run time
-
-                val result = Future.traverse(1 to (numThreads * 5))(runOne(_, numIterations))
-                Await.result(result, 10.seconds)
-              }
+                  val result = Future.traverse(1 to (numThreads * 5))(runOne(_, numIterations))
+                  Await.result(result, 10.seconds)
+                }
             }
         }
       }
@@ -108,7 +114,7 @@ class StarvationDetectorSpec extends AkkaSpec(
         //EventFilter.warning(start = "Exceedingly long scheduling time on ExecutionContext", occurrences = 0).intercept {
         val numIterations = 10000 // 10000 * 200 tasks, runs in 1.7 seconds on my machine on two threads
 
-        val result = Future.sequence(1 to 200 map (_ => runThunks(numIterations)))
+        val result = Future.sequence((1 to 200).map(_ => runThunks(numIterations)))
         Await.result(result, 10.seconds)
         //}
       }
@@ -124,15 +130,20 @@ class StarvationDetectorSpec extends AkkaSpec(
   private def resetWarningInterval(): Unit = {
     val threads = new Array[Thread](10000)
     val res = Thread.enumerate(threads)
-    threads.take(res).collect {
-      case t: StarvationDetectorThread => t
-    }.foreach(_.nextWarningAfterNanos = 0L)
+    threads
+      .take(res)
+      .collect {
+        case t: StarvationDetectorThread =>
+          t
+      }
+      .foreach(_.nextWarningAfterNanos = 0L)
   }
 
   val OtherEC = ExecutionContexts.fromExecutor(Executors.newCachedThreadPool())
 
   case class AntiPattern(name: String, expectedIssueDescription: String, block: () => Unit)
-  def antiPattern(name: String, expectedIssueDescription: String)(block: => Unit): AntiPattern = AntiPattern(name, expectedIssueDescription, block _)
+  def antiPattern(name: String, expectedIssueDescription: String)(block: => Unit): AntiPattern =
+    AntiPattern(name, expectedIssueDescription, block _)
 
   // A collection of blocking AntiPatterns to test, each should take ~ 100ms
   lazy val AntiPatterns: Seq[AntiPattern] = Seq(
@@ -156,7 +167,8 @@ class StarvationDetectorSpec extends AkkaSpec(
 
       val b = new Array[Byte](3000000) // may need tuning depending on how fast your disk is
       val fos = new FileOutputStream(tmp)
-      try fos.write(b) finally {
+      try fos.write(b)
+      finally {
         fos.close()
         tmp.delete()
       }

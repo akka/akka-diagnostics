@@ -61,7 +61,12 @@ object StarvationDetectorSettings {
     maxDelayWarningThreshold: FiniteDuration,
     warningInterval: FiniteDuration,
     threadTraceLimit: Int): StarvationDetectorSettings =
-    StarvationDetectorSettingsImpl(checkInterval, initialDelay, maxDelayWarningThreshold, warningInterval, threadTraceLimit)
+    StarvationDetectorSettingsImpl(
+      checkInterval,
+      initialDelay,
+      maxDelayWarningThreshold,
+      warningInterval,
+      threadTraceLimit)
 
   /** Java API */
   def create(
@@ -105,8 +110,8 @@ object StarvationDetectorSettings {
     initialDelay: FiniteDuration,
     maxDelayWarningThreshold: FiniteDuration,
     warningInterval: FiniteDuration,
-    threadTraceLimit: Int) extends StarvationDetectorSettings {
-  }
+    threadTraceLimit: Int)
+    extends StarvationDetectorSettings {}
 }
 
 object StarvationDetector {
@@ -114,28 +119,31 @@ object StarvationDetector {
   final case class UnsupportedDispatcherException(msg: String) extends RuntimeException(msg) with NoStackTrace
 
   /**
-   * Creates and runs a StarvationDetector thread for the dispatcher of the system's main dispatcher, i.e. akka.actor.default-dispatcher.
+   * Creates and runs a StarvationDetector thread for the dispatcher of the system's main dispatcher, i.e.
+   * akka.actor.default-dispatcher.
    */
   def checkSystemDispatcher(system: ActorSystem): Unit =
-    checkSystemDispatcher(system, StarvationDetectorSettings.fromConfig(
-      system.settings.config.getConfig("akka.diagnostics.starvation-detector")))
+    checkSystemDispatcher(
+      system,
+      StarvationDetectorSettings.fromConfig(system.settings.config.getConfig("akka.diagnostics.starvation-detector")))
 
   /**
-   * Creates and runs a StarvationDetector thread for the dispatcher of the system's main dispatcher, i.e. akka.actor.default-dispatcher,
-   * with custom configuration.
+   * Creates and runs a StarvationDetector thread for the dispatcher of the system's main dispatcher, i.e.
+   * akka.actor.default-dispatcher, with custom configuration.
    */
   def checkSystemDispatcher(system: ActorSystem, config: StarvationDetectorSettings): Unit =
     checkExecutionContext(
       system.dispatcher,
       Logging(system, classOf[StarvationDetectorThread]),
-      config, () => system.whenTerminated.isCompleted)
+      config,
+      () => system.whenTerminated.isCompleted)
 
   /**
    * Creates and runs a StarvationDetector thread for the given ExecutionContext. Thread analytics are currently only
    * available for Akka dispatchers.
    *
-   * You need to provide a `hasTerminated` function that will be used to figure out if the execution context has shut down
-   * to shutdown the starvation detector thread.
+   * You need to provide a `hasTerminated` function that will be used to figure out if the execution context has shut
+   * down to shutdown the starvation detector thread.
    */
   def checkExecutionContext(
     ec: ExecutionContext,
@@ -154,8 +162,8 @@ object StarvationDetector {
    * Creates and runs a StarvationDetector thread for the given ExecutionContext. Thread analytics are currently only
    * available for Akka dispatchers.
    *
-   * You need to provide a `hasTerminated` function that will be used to figure out if the execution context has shut down
-   * to shutdown the starvation detector thread.
+   * You need to provide a `hasTerminated` function that will be used to figure out if the execution context has shut
+   * down to shutdown the starvation detector thread.
    */
   def checkExecutionContext(
     ec: ExecutionContext,
@@ -174,7 +182,8 @@ object StarvationDetector {
     ec: ExecutionContext,
     log: LoggingAdapter,
     config: StarvationDetectorSettings,
-    hasTerminated: () => Boolean) extends Thread {
+    hasTerminated: () => Boolean)
+    extends Thread {
     import config._
 
     val ecName = ec.toString
@@ -239,7 +248,8 @@ object StarvationDetector {
         val random = ThreadLocalRandom.current()
 
         if (initialDelay > Duration.Zero) {
-          log.info(s"Starvation detector will start after `akka.diagnostics.starvation-detector.initial-delay = $initialDelay`")
+          log.info(
+            s"Starvation detector will start after `akka.diagnostics.starvation-detector.initial-delay = $initialDelay`")
           LockSupport.parkNanos(initialDelay.toNanos)
         }
         log.info(s"Starvation detector starting for dispatcher [$ec]")
@@ -247,7 +257,9 @@ object StarvationDetector {
           try checkOnce()
           catch {
             case NonFatal(ex) =>
-              log.error(ex, "Starvation detector failed and terminated. This is likely a bug. Please report to Lightbend support.")
+              log.error(
+                ex,
+                "Starvation detector failed and terminated. This is likely a bug. Please report to Lightbend support.")
               return
           }
           // Add +/- 5% of jitter. In tests, we observed accidental synchronization of starvation detector execution
@@ -277,17 +289,21 @@ object StarvationDetector {
         val read = Thread.enumerate(buffer)
         val threadsForPrefix = buffer
           .take(read)
-          .filter(_.getName startsWith prefix)
+          .filter(_.getName.startsWith(prefix))
           .toVector
         if (threadsForPrefix.nonEmpty) threadsForPrefix
         else {
           if (log.isDebugEnabled) {
-            log.debug("Failed to find any threads for prefix [{}] among thread names [{}]", prefix, buffer.map(_.getName).mkString(", "))
+            log.debug(
+              "Failed to find any threads for prefix [{}] among thread names [{}]",
+              prefix,
+              buffer.map(_.getName).mkString(", "))
           }
           Nil
         }
       case _ =>
-        throw UnsupportedDispatcherException(s"Failed to extract thread prefix, unsupported executor service type [${es.getClass.toString}], starvation will not be detected for this dispatcher.")
+        throw UnsupportedDispatcherException(
+          s"Failed to extract thread prefix, unsupported executor service type [${es.getClass.toString}], starvation will not be detected for this dispatcher.")
     }
     private def threadNamePrefix(es: ExecutorService): Option[String] = es match {
       case ak: AkkaForkJoinPool => Some(getAkkaFJPFactory(ak).name)
@@ -297,14 +313,17 @@ object StarvationDetector {
     }
     private def isSleepingFJThread(trace: StackTrace): Boolean =
       trace.length >= 2 &&
-        trace.take(5).exists(t =>
+        trace
+        .take(5)
+        .exists(t =>
           Problem.classMethod("akka.dispatch.forkjoin.ForkJoinPool.scan")(t) ||
             Problem.classMethod("java.util.concurrent.ForkJoinPool.scan")(t))
 
     private def topStacks(threadStacks: Seq[ThreadStatus]): String = {
       val allStacks =
         threadStacks
-          .map(_.mapTrace(_.takeWhile(!_.getClassName.endsWith("TaskInvocation")))) // TaskInvocation.run is the last frame belonging to Akka's scheduler impl
+          .map(
+            _.mapTrace(_.takeWhile(!_.getClassName.endsWith("TaskInvocation")))) // TaskInvocation.run is the last frame belonging to Akka's scheduler impl
 
       val filteredStacksWithoutEmpty =
         allStacks
@@ -319,8 +338,10 @@ object StarvationDetector {
 
       val groupedAndSortedBySize =
         filteredStacks
-          .groupBy(x => (x.stackTrace.toVector, x.state)).toVector
-          .groupBy(_._2.size).toVector
+          .groupBy(x => (x.stackTrace.toVector, x.state))
+          .toVector
+          .groupBy(_._2.size)
+          .toVector
           .sortBy(-_._1)
 
       if (groupedAndSortedBySize.nonEmpty) {
@@ -340,9 +361,11 @@ object StarvationDetector {
           .map {
             case ((topElement, topState), els) =>
               val problem = Problem.WellKnownProblems.find(_.stackTraceFilter(topElement))
-              val problemDesc = problem.map { p =>
-                s"\n\nPotential issue '${p.name}': ${p.description}${p.uri.map(uri => s" Find more information at $uri.").getOrElse("")}"
-              }.getOrElse("")
+              val problemDesc = problem
+                .map { p =>
+                  s"\n\nPotential issue '${p.name}': ${p.description}${p.uri.map(uri => s" Find more information at $uri.").getOrElse("")}"
+                }
+                .getOrElse("")
 
               f"${els.size}%3d thread(s) in state: $topState%s ${topElement.head}\n" +
                 topElement.drop(1).map(el => s"    $el").mkString("\n") + problemDesc
@@ -358,41 +381,45 @@ object StarvationDetector {
     }
 
     private def threadStats(threads: Seq[ThreadStatus]): String = {
-      threads.groupBy(_.state).toVector
+      threads
+        .groupBy(_.state)
+        .toVector
         .sortBy(_._1.name())
         .map {
-          case (state, els) => f"${els.size}%3d $state"
+          case (state, els) =>
+            f"${els.size}%3d $state"
         }
         .mkString(" ")
     }
   }
 
   private type StackTraceFilter = Seq[StackTraceElement] => Boolean
-  private case class Problem(
-    name: String,
-    description: String,
-    uri: Option[String],
-    stackTraceFilter: StackTraceFilter)
+  private case class Problem(name: String, description: String, uri: Option[String], stackTraceFilter: StackTraceFilter)
   private object Problem {
     val WellKnownProblems: Seq[Problem] = Seq(
       Problem(
-        "Thread.sleep", "Thread.sleep blocks a thread. Use system.scheduler.scheduleOnce or akka.pattern.after to continue processing asynchronously after a delay.",
+        "Thread.sleep",
+        "Thread.sleep blocks a thread. Use system.scheduler.scheduleOnce or akka.pattern.after to continue processing asynchronously after a delay.",
         None,
         topFrameIs(classMethod("java.lang.Thread.sleep"))),
       Problem(
-        "Await", "Await.ready / Await.result blocks a thread. Use Future.map and other combinators to continue processing asynchronously after a Future is completed.",
+        "Await",
+        "Await.ready / Await.result blocks a thread. Use Future.map and other combinators to continue processing asynchronously after a Future is completed.",
         None,
         anyFrameIs(classMethod("scala.concurrent.Await$.ready") || classMethod("scala.concurrent.Await$.result"))),
       Problem(
-        "CompletableFuture.get", "CompletableFuture.get blocks a thread. Use `thenApply` and other combinators to continue processing asynchronously after a Future is completed.",
+        "CompletableFuture.get",
+        "CompletableFuture.get blocks a thread. Use `thenApply` and other combinators to continue processing asynchronously after a Future is completed.",
         None,
         anyFrameIs(classMethod("java.util.concurrent.CompletableFuture.get"))),
       Problem(
-        "java.net", "java.net API is synchronous and blocks a thread. Use an asynchronous network API instead like Akka TCP, Akka Stream TCP, or java.nio.channels.SocketChannel.",
+        "java.net",
+        "java.net API is synchronous and blocks a thread. Use an asynchronous network API instead like Akka TCP, Akka Stream TCP, or java.nio.channels.SocketChannel.",
         None,
         topFrameIs(classStartsWith("java.net"))),
       Problem(
-        "java.io", "java.io API is synchronous and blocks a thread. Make sure to run (potentially) blocking IO operations in a dedicated IO dispatcher.",
+        "java.io",
+        "java.io API is synchronous and blocks a thread. Make sure to run (potentially) blocking IO operations in a dedicated IO dispatcher.",
         None,
         topFrameIs(classStartsWith("java.io"))))
 
@@ -431,7 +458,8 @@ object StarvationDetector {
   }
 
   private lazy val getAffinityPoolFactory: AffinityPoolAccessor => MonitorableThreadFactory = {
-    val threadFactoryField = classOf[AffinityPoolAccessor].getDeclaredField("akka$dispatch$affinity$AffinityPool$$threadFactory")
+    val threadFactoryField =
+      classOf[AffinityPoolAccessor].getDeclaredField("akka$dispatch$affinity$AffinityPool$$threadFactory")
     threadFactoryField.setAccessible(true)
 
     ap => threadFactoryField.get(ap).asInstanceOf[MonitorableThreadFactory]

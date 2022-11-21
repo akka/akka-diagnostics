@@ -48,31 +48,31 @@ private[akka] object DiagnosticsRecorder extends ExtensionId[DiagnosticsRecorder
   /**
    * The MBean interface of the Diagnostics Recorder
    */
-  @Description("Akka Diagnostics Recorder writes configuration and system information to a " +
-    "file that can be attached to your Lightbend support cases.")
+  @Description(
+    "Akka Diagnostics Recorder writes configuration and system information to a " +
+      "file that can be attached to your Lightbend support cases.")
   trait DiagnosticsRecorderMBean {
     @Description("The location of the diagnostics file.")
     def getReportFileLocation: String
 
-    @Description("Capture a configured number of thread dumps and additional metrics and " +
-      "append to the diagnostics report file.")
+    @Description(
+      "Capture a configured number of thread dumps and additional metrics and " +
+        "append to the diagnostics report file.")
     def collectThreadDumps(): String
 
-    @Description("Capture a given number of thread dumps and additional metrics and " +
-      "append to the diagnostics report file.")
-    def collectThreadDumps(
-      @Description("number of thread dumps")@Name("count") count: java.lang.Integer): String
+    @Description(
+      "Capture a given number of thread dumps and additional metrics and " +
+        "append to the diagnostics report file.")
+    def collectThreadDumps(@Description("number of thread dumps")@Name("count") count: java.lang.Integer): String
   }
 }
 
 /**
- * INTERNAL API: Akka Diagnostics Recorder writes configuration and system information
- * to a file that customers can attach to Lightbend support cases.
- * The information will help us at Lightbend to give you the best possible support.
+ * INTERNAL API: Akka Diagnostics Recorder writes configuration and system information to a file that customers can
+ * attach to Lightbend support cases. The information will help us at Lightbend to give you the best possible support.
  *
- * It will register a MBean in the "akka" name space, which can be accessed
- * from a JMX console such as JConsole. From JMX you can trigger thread dumps
- * that will also be appended to the file.
+ * It will register a MBean in the "akka" name space, which can be accessed from a JMX console such as JConsole. From
+ * JMX you can trigger thread dumps that will also be appended to the file.
  */
 private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Extension {
   import DiagnosticsRecorder._
@@ -82,8 +82,8 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
 
   private val config = system.settings.config
   private val enabled = config.getBoolean("akka.diagnostics.recorder.enabled")
-  private val sensitiveConfigPaths: Set[String] = config.getStringList(
-    "akka.diagnostics.recorder.sensitive-config-paths").asScala.toSet
+  private val sensitiveConfigPaths: Set[String] =
+    config.getStringList("akka.diagnostics.recorder.sensitive-config-paths").asScala.toSet
   private val collectThreadDumpsCount = config.getInt("akka.diagnostics.recorder.collect-thread-dumps-count")
   private val collectThreadDumpsInterval =
     config.getDuration("akka.diagnostics.recorder.collect-thread-dumps-interval", MILLISECONDS).millis
@@ -125,8 +125,7 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
   }
 
   /**
-   * Collect configuration and some system metrics, such as heap settings
-   * and write to the diagnostics report file.
+   * Collect configuration and some system metrics, such as heap settings and write to the diagnostics report file.
    */
   def runStartupReport(): Unit = {
     if (enabled) {
@@ -151,7 +150,9 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
       }
     } catch {
       case NonFatal(e) =>
-        system.log.warning("Couldn't gather Akka diagnostics information, please configure section akka.diagnostics.recorder (to correct error or turn off this feature): {}", e.getMessage)
+        system.log.warning(
+          "Couldn't gather Akka diagnostics information, please configure section akka.diagnostics.recorder (to correct error or turn off this feature): {}",
+          e.getMessage)
     }
   }
 
@@ -236,8 +237,7 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
   }
 
   /**
-   * Extract the application specific configuration, i.e. remove
-   * things that come from reference.conf
+   * Extract the application specific configuration, i.e. remove things that come from reference.conf
    */
   def applicationConfig(config: Config, reference: Config): Config = {
     var result = config
@@ -286,7 +286,8 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
 
     val excludedSensitive = sensitiveConfigPaths.filter(result.hasPath)
     val result2 = excludedSensitive.foldLeft(result) { (acc, p) => acc.withoutPath(p) }
-    val result3 = ConfigFactory.parseMap(Map("excluded-sensitive-paths" -> excludedSensitive.toSeq.asJava).asJava)
+    val result3 = ConfigFactory
+      .parseMap(Map("excluded-sensitive-paths" -> excludedSensitive.toSeq.asJava).asJava)
       .withFallback(result2)
     result3
   }
@@ -340,9 +341,8 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
   }
 
   /**
-   * Collect a number of thread dumps with configured interval.
-   * The thread dumps and some basic metrics such as heap usage are
-   * appended to diagnostics report file.
+   * Collect a number of thread dumps with configured interval. The thread dumps and some basic metrics such as heap
+   * usage are appended to diagnostics report file.
    */
   def runCollectThreadDumps(count: Int): Unit = {
     for (n <- 0 until count) {
@@ -355,7 +355,8 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
     fileLock.synchronized {
       mkReportDir(reportFile.getParentFile) // in case the directory was removed
       val writer = createWriter(reportFile, append = true)
-      try writer.println(dump) finally Try(writer.close())
+      try writer.println(dump)
+      finally Try(writer.close())
     }
   } catch {
     case NonFatal(e) =>
@@ -415,9 +416,7 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
   }
 
   private def dumpAllThreads(): Seq[ThreadInfo] = {
-    threadMx.dumpAllThreads(
-      threadMx.isObjectMonitorUsageSupported,
-      threadMx.isSynchronizerUsageSupported).toIndexedSeq
+    threadMx.dumpAllThreads(threadMx.isObjectMonitorUsageSupported, threadMx.isSynchronizerUsageSupported).toIndexedSeq
   }
 
   private def findDeadlockedThreads(): (Seq[ThreadInfo], String) = {
@@ -463,7 +462,8 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
 
     val locks = ti.getLockedSynchronizers
     if (locks.nonEmpty)
-      appendJsonName(sb, "    ", "locked-synchronizers").append("[")
+      appendJsonName(sb, "    ", "locked-synchronizers")
+        .append("[")
         .append(locks.mkString("\n      \"", "\",\n      \"", "\""))
         .append("],\n")
 
@@ -477,7 +477,7 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
     if (stackTrace.length != 0) sb.append("\n")
     for (i <- 0 until stackTrace.length) {
       val ste = stackTrace(i)
-      appendFrame("at ", ste, first = (i == 0))
+      appendFrame("at ", ste, first = i == 0)
       if (i == 0 && ti.getLockInfo != null) {
         import java.lang.Thread.State._
         ti.getThreadState match {
@@ -555,7 +555,9 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
   /**
    * INTERNAL API
    */
-  private[akka] class DiagnosticsRecorderMBeanImpl extends StandardMBean(classOf[DiagnosticsRecorderMBean]) with DiagnosticsRecorderMBean {
+  private[akka] class DiagnosticsRecorderMBeanImpl
+    extends StandardMBean(classOf[DiagnosticsRecorderMBean])
+    with DiagnosticsRecorderMBean {
 
     override lazy val getReportFileLocation: String = reportFile.getAbsolutePath
 

@@ -23,7 +23,10 @@ object ConfigChecker {
 
   final case class ValidationResults(warnings: immutable.Seq[ConfigWarning])
 
-  final case class ConfigWarning(checkerKey: String, message: String, properties: immutable.Seq[String],
+  final case class ConfigWarning(
+    checkerKey: String,
+    message: String,
+    properties: immutable.Seq[String],
     defaults: immutable.Seq[String]) {
 
     def propertiesAsString: String = properties.mkString(", ")
@@ -37,23 +40,21 @@ object ConfigChecker {
   }
 
   /**
-   * Main method to run the `ConfigChecker` as a java program. The configuration
-   * is loaded by the Lightbend Config library, i.e. "application.conf" if you don't
-   * specify another file with for example `-Dconfig.file`.
-   * See https://github.com/typesafehub/config for details of how to specify
-   * configuration location.
+   * Main method to run the `ConfigChecker` as a java program. The configuration is loaded by the Lightbend Config
+   * library, i.e. "application.conf" if you don't specify another file with for example `-Dconfig.file`. See
+   * https://github.com/typesafehub/config for details of how to specify configuration location.
    *
-   * Potential configuration issues, if any, are printed to `System.out` and the JVM
-   * is exited with -1 status code.
+   * Potential configuration issues, if any, are printed to `System.out` and the JVM is exited with -1 status code.
    *
-   * If no configuration issues are found the message "No configuration issues found"
-   * is printed to `System.out` and the JVM is exited with 0 status code.
+   * If no configuration issues are found the message "No configuration issues found" is printed to `System.out` and the
+   * JVM is exited with 0 status code.
    *
    * Use [#reportIssues] if you don't want to exit the JVM.
    */
   def main(args: Array[String]): Unit = {
 
-    val config = ConfigFactory.parseString("akka.diagnostics.checker.fail-on-warning = on")
+    val config = ConfigFactory
+      .parseString("akka.diagnostics.checker.fail-on-warning = on")
       .withFallback(ConfigFactory.load())
 
     Try(ActorSystem("ConfigChecker", config)) match {
@@ -68,8 +69,7 @@ object ConfigChecker {
   }
 
   /**
-   * Validates the configuration of the given actor system.
-   * This is performed when the actor system is started.
+   * Validates the configuration of the given actor system. This is performed when the actor system is started.
    */
   def reportIssues(system: ExtendedActorSystem): Unit = {
     import Internal._
@@ -91,8 +91,8 @@ object ConfigChecker {
     mode(system.settings.config) match {
       case Disabled => // don't run checks
       case LogWarnings =>
-        val asyncCheckAfter = system.settings.config.getDuration(
-          "akka.diagnostics.checker.async-check-after", MILLISECONDS).millis
+        val asyncCheckAfter =
+          system.settings.config.getDuration("akka.diagnostics.checker.async-check-after", MILLISECONDS).millis
         if (asyncCheckAfter > Duration.Zero)
           system.scheduler.scheduleOnce(asyncCheckAfter)(runChecks())(system.dispatcher)
         else
@@ -101,8 +101,8 @@ object ConfigChecker {
       case FailOnWarnings =>
         val result = runChecks()
         if (result.warnings.nonEmpty)
-          throw new IllegalArgumentException(lightbendRecommendation(
-            result.warnings.map(format).mkString("\n* ", "\n* ", "\n")))
+          throw new IllegalArgumentException(
+            lightbendRecommendation(result.warnings.map(format).mkString("\n* ", "\n* ", "\n")))
     }
   }
 
@@ -158,19 +158,17 @@ object ConfigChecker {
 }
 
 /**
- * The `ConfigChecker will try to find potential configuration issues.
- * It is run when the actor system is started. It also possible to run it
- * as a Java main program, see [[ConfigChecker#main]].
+ * The `ConfigChecker will try to find potential configuration issues. It is run when the actor system is started. It
+ * also possible to run it as a Java main program, see [[ConfigChecker#main]].
  *
- * Detailed documentation can be found in the `akka.diagnostics.checker` section
- * of the reference.conf and in the "Configuration Checker" section of the
- * Akka Reference Documentation.
+ * Detailed documentation can be found in the `akka.diagnostics.checker` section of the reference.conf and in the
+ * "Configuration Checker" section of the Akka Reference Documentation.
  */
 class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Config) {
   import ConfigChecker._
 
-  def this(system: ExtendedActorSystem) = this(system, system.settings.config,
-    ConfigFactory.defaultReference(system.dynamicAccess.classLoader))
+  def this(system: ExtendedActorSystem) =
+    this(system, system.settings.config, ConfigFactory.defaultReference(system.dynamicAccess.classLoader))
 
   private[akka] val isAkka26: Boolean =
     system.settings.ConfigVersion.startsWith("2.6")
@@ -181,8 +179,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   private val confirmedPowerUserSettings: Set[String] =
     config.getStringList("akka.diagnostics.checker.confirmed-power-user-settings").asScala.toSet
   private[akka] val (powerUserSettings: Set[String], powerUserWildcardSettings: Set[String]) = {
-    val fullList = expandPowerUserSettings(config.getStringList("akka.diagnostics.checker.power-user-settings").asScala.toSet) diff
-      confirmedPowerUserSettings
+    val fullList =
+      expandPowerUserSettings(config.getStringList("akka.diagnostics.checker.power-user-settings").asScala.toSet)
+        .diff(confirmedPowerUserSettings)
     val (wildcards, exact) = fullList.partition(_.endsWith(".*"))
     val wildcardPrefixes = wildcards.map(s => s.substring(0, s.length - 2))
 
@@ -193,7 +192,8 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     // FIXME remove these automatic additions when only using AKka 2.6
     if (isAkka26)
       settings.flatMap { s =>
-        if (s.startsWith("akka.remote.") && !s.startsWith("akka.remote.classic.") && !s.startsWith("akka.remote.artery."))
+        if (s.startsWith("akka.remote.") && !s.startsWith("akka.remote.classic.") && !s.startsWith(
+          "akka.remote.artery."))
           s :: remoteConfigPath(s) :: Nil // add .classic automatically for Akka 2.5 and 2.6 support
         else
           s :: Nil
@@ -203,8 +203,11 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   }
 
   private val disabledTypoSections: Set[String] = {
-    config.getStringList("akka.diagnostics.checker.disabled-typo-sections").asScala.toSet union
-      config.getStringList("akka.diagnostics.checker.confirmed-typos").asScala.toSet
+    config
+      .getStringList("akka.diagnostics.checker.disabled-typo-sections")
+      .asScala
+      .toSet
+      .union(config.getStringList("akka.diagnostics.checker.confirmed-typos").asScala.toSet)
   }
 
   private val defaultDispatcherPath = "akka.actor.default-dispatcher"
@@ -213,18 +216,21 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   private val knownDispatcherTypes = Set("PinnedDispatcher", "Dispatcher")
   private val knownExecutorTypes =
     Set("default-executor", "fork-join-executor", "thread-pool-executor", "affinity-pool-executor")
-  private val knownDispatcherPrefixes = Set(
-    "akka.", "lagom.", "play.", "cassandra-plugin-", "kafka.")
+  private val knownDispatcherPrefixes = Set("akka.", "lagom.", "play.", "cassandra-plugin-", "kafka.")
 
   private val knownSettings = {
     import scala.collection.JavaConverters._
     def collectLeaves(path: String, list: ConfigObject): Seq[(String, String)] =
-      list.entrySet().iterator().asScala
+      list
+        .entrySet()
+        .iterator()
+        .asScala
         .map(e => e.getKey -> e.getValue)
         .flatMap {
           case (key, obj: ConfigObject) => collectLeaves(s"$path.$key", obj)
           case (key, _) => Seq(key -> s"$path.$key")
-        }.toVector
+        }
+        .toVector
 
     collectLeaves("akka", reference.getConfig("akka").root)
   }
@@ -233,7 +239,8 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   private def similar(name: String): Seq[String] =
     knownSettings
       .map {
-        case (key, path) => (key, path, StringUtils.getLevenshteinDistance(key, name, maxSimilarDistance))
+        case (key, path) =>
+          (key, path, StringUtils.getLevenshteinDistance(key, name, maxSimilarDistance))
       }
       .filter(_._3 >= 0)
       .sortBy(_._3)
@@ -346,12 +353,15 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
                     typoCheckKey,
                     s"$p is not an Akka configuration setting.$didYouMeanSentence Is it a typo or is it placed in the wrong section? " +
                       """Application specific properties should be placed outside the "akka" config tree.""",
-                    List(p), Nil)
+                    List(p),
+                    Nil)
                 }
               }
 
               if (checkPowerUserSettings && isModifiedPowerUserSetting(p))
-                w ++= warn(powerUserSettingsCheckKey, p,
+                w ++= warn(
+                  powerUserSettingsCheckKey,
+                  p,
                   s"$p is an advanced configuration setting. Make sure that you fully understand " +
                     "the implications of changing the default value. You can confirm that you know " +
                     s"the meaning of this configuration setting by adding [$p] to configuration string list " +
@@ -465,7 +475,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
                   "typo",
                   s"$fullPath is not an Akka dispatcher configuration setting. Is it a typo or is it placed in the wrong section? " +
                     s"If this is not a dispatcher setting you may disable this check by adding [$fullPath] to configuration string list " +
-                    s"akka.diagnostics.checker.confirmed-typos.", List(fullPath), Nil)
+                    s"akka.diagnostics.checker.confirmed-typos.",
+                  List(fullPath),
+                  Nil)
               }
               pathList.removeLast()
             case _ =>
@@ -493,21 +505,32 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   private def checkProvider(): List[ConfigWarning] =
     ifEnabled("actor-ref-provider") { checkerKey =>
       val path = "akka.actor.provider"
-      val supported = Set("akka.actor.LocalActorRefProvider", "akka.remote.RemoteActorRefProvider",
-        "akka.cluster.ClusterActorRefProvider", "local", "remote", "cluster")
+      val supported = Set(
+        "akka.actor.LocalActorRefProvider",
+        "akka.remote.RemoteActorRefProvider",
+        "akka.cluster.ClusterActorRefProvider",
+        "local",
+        "remote",
+        "cluster")
       val provider = config.getString(path)
       if (supported(provider)) Nil
-      else warn(checkerKey, path,
-        s"[$provider] is not a supported ActorRef provider. Use one of [${supported.mkString(", ")}].")
+      else
+        warn(
+          checkerKey,
+          path,
+          s"[$provider] is not a supported ActorRef provider. Use one of [${supported.mkString(", ")}].")
     }
 
   private def checkJvmExitOnFatalError(): List[ConfigWarning] =
     ifEnabled("jvm-exit-on-fatal-error") { checkerKey =>
       val path = "akka.jvm-exit-on-fatal-error"
       if (config.getBoolean(path)) Nil
-      else warn(checkerKey, path,
-        "Don't use jvm-exit-on-fatal-error=off. It's safer to shutdown the JVM in case of a " +
-          "fatal error, such as OutOfMemoryError.")
+      else
+        warn(
+          checkerKey,
+          path,
+          "Don't use jvm-exit-on-fatal-error=off. It's safer to shutdown the JVM in case of a " +
+            "fatal error, such as OutOfMemoryError.")
     }
 
   private def dispatcherPoolSize(c: Config): Int = {
@@ -535,7 +558,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
 
       val availableProcessors = Runtime.getRuntime.availableProcessors
       if (size > 64 && size > availableProcessors)
-        warn(checkerKey, path,
+        warn(
+          checkerKey,
+          path,
           s"Don't use too large pool size [$size] for the default-dispatcher. " +
             "Note that the pool size is calculated by ceil(available processors * parallelism-factor), " +
             "and then bounded by the parallelism-min and parallelism-max values. " +
@@ -544,7 +569,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
             "a dedicated dispatcher to manage blocking tasks/actors. Blocking execution shouldn't " +
             "run on the default-dispatcher because that may starve system internal tasks.")
       else if (size <= 3)
-        warn(checkerKey, path,
+        warn(
+          checkerKey,
+          path,
           s"Don't use too small pool size [$size] for the default-dispatcher. " +
             "Internal actors and tasks may run on the default-dispatcher.")
       else Nil
@@ -556,7 +583,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val dispatcherType = config.getString(path + ".type")
       if (dispatcherType == "PinnedDispatcher" ||
         dispatcherType == "akka.testkit.CallingThreadDispatcherConfigurator")
-        warn(checkerKey, path,
+        warn(
+          checkerKey,
+          path,
           s"Don't use [$dispatcherType] as default-dispatcher. Configure a separate dispatcher for " +
             "that kind of special purpose dispatcher.")
       else Nil
@@ -567,7 +596,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val throughput = c.getInt("throughput")
       val deadline = c.getDuration("throughput-deadline-time", MILLISECONDS)
       if (throughput > 100 && deadline <= 0L)
-        warn(checkerKey, List(path + ".throughput", path + ".throughput-deadline-time"),
+        warn(
+          checkerKey,
+          List(path + ".throughput", path + ".throughput-deadline-time"),
           s"Use throughput-deadline-time when dispatcher is configured with high throughput [$throughput] " +
             "batching to avoid unfair processing.")
       else Nil
@@ -581,7 +612,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       else {
         val availableProcessors = Runtime.getRuntime.availableProcessors
         if (size > 64 && size > availableProcessors)
-          warn(checkerKey, path,
+          warn(
+            checkerKey,
+            path,
             s"Don't use too large pool size [$size] for fork-join pool. " +
               "Note that the pool size is calculated by ceil(available processors * parallelism-factor), " +
               "and then bounded by the parallelism-min and parallelism-max values. " +
@@ -596,7 +629,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     ifEnabled("dispatcher-count") { checkerKey =>
       val customDispatchers = dispatchers.collect { case (p, _) if !isLightbendInternalDispatcher(p) => p }
       if (customDispatchers.size > 6)
-        warn(checkerKey, customDispatchers.toList,
+        warn(
+          checkerKey,
+          customDispatchers.toList,
           s"You have configured [${customDispatchers.size}] different custom dispatchers. " +
             "Do you really need that many dispatchers? " +
             "Separating into CPU bound tasks and blocking (IO) tasks are often enough.")
@@ -618,7 +653,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val total = sizes.foldLeft(0) { case (acc, (_, s)) => acc + s }
       val availableProcessors = Runtime.getRuntime.availableProcessors
       if (total > 200 && total > availableProcessors * 2)
-        warn(checkerKey, sizes.collect { case (p, s) if s != 0 => p }.toList,
+        warn(
+          checkerKey,
+          sizes.collect { case (p, s) if s != 0 => p }.toList,
           s"You have a total of [$total] threads in all configured dispatchers. " +
             "That many threads might result in reduced performance. " +
             s"This machine has [$availableProcessors] available processors.")
@@ -658,7 +695,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     ifEnabled("remote-dispatcher") { checkerKey =>
       val path = remoteConfigPath("akka.remote.use-dispatcher")
       if (config.getString(path) == defaultDispatcherPath)
-        warn(checkerKey, path,
+        warn(
+          checkerKey,
+          path,
           "Use a dedicated dispatcher for remoting instead of default-dispatcher. " +
             "The internal actors in remoting may use the threads in a way that should not " +
             "interfere with other system internal tasks that are running on the default-dispatcher. " +
@@ -668,8 +707,11 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
 
   private def checkSecureCookie(): List[ConfigWarning] =
     ifEnabled("secure-cookie") { checkerKey =>
-      if (!isAkka26 && (config.getBoolean("akka.remote.require-cookie") || config.getString("akka.remote.secure-cookie") != ""))
-        warn(checkerKey, List("akka.remote.require-cookie", "akka.remote.secure-cookie"),
+      if (!isAkka26 && (config.getBoolean("akka.remote.require-cookie") || config.getString(
+        "akka.remote.secure-cookie") != ""))
+        warn(
+          checkerKey,
+          List("akka.remote.require-cookie", "akka.remote.secure-cookie"),
           s"Secure cookie is not a proper security solution. It is deprecated in Akka 2.4.x.")
       else Nil
     }
@@ -682,29 +724,44 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val acceptable = config.getDuration(path + ".acceptable-heartbeat-pause", MILLISECONDS).millis
 
       val w1 =
-        if (heartbeatInterval < 1.second) warn(checkerKey, path + ".heartbeat-interval",
-          s"Transport failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
-            "is probably too short to be meaningful.")
-        else if (heartbeatInterval > 30.seconds) warn(checkerKey, path + ".heartbeat-interval",
-          s"Transport failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
-            "is probably too long to be meaningful.")
+        if (heartbeatInterval < 1.second)
+          warn(
+            checkerKey,
+            path + ".heartbeat-interval",
+            s"Transport failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
+              "is probably too short to be meaningful.")
+        else if (heartbeatInterval > 30.seconds)
+          warn(
+            checkerKey,
+            path + ".heartbeat-interval",
+            s"Transport failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
+              "is probably too long to be meaningful.")
         else Nil
 
       val w2 =
-        if (acceptable < 15.second) warn(checkerKey, path + ".acceptable-heartbeat-pause",
-          s"Transport failure detector acceptable-heartbeat-pause of [${acceptable.toMillis} ms] " +
-            "is probably too short to be meaningful. It may cause too many unecessary reconnects.")
-        else if (acceptable > 2.minutes) warn(checkerKey, path + ".acceptable-heartbeat-pause",
-          s"Transport failure detector acceptable-heartbeat-pause of [${acceptable.toMillis}} ms] " +
-            "is probably too long to be meaningful.")
+        if (acceptable < 15.second)
+          warn(
+            checkerKey,
+            path + ".acceptable-heartbeat-pause",
+            s"Transport failure detector acceptable-heartbeat-pause of [${acceptable.toMillis} ms] " +
+              "is probably too short to be meaningful. It may cause too many unecessary reconnects.")
+        else if (acceptable > 2.minutes)
+          warn(
+            checkerKey,
+            path + ".acceptable-heartbeat-pause",
+            s"Transport failure detector acceptable-heartbeat-pause of [${acceptable.toMillis}} ms] " +
+              "is probably too long to be meaningful.")
         else Nil
 
       val ratio = acceptable.toMillis / heartbeatInterval.toMillis
       val w3 =
-        if (ratio < 3) warn(checkerKey, List(path + ".acceptable-heartbeat-pause", path + ".heartbeat-interval"),
-          s"Transport failure detector ratio [$ratio] between acceptable-heartbeat-pause and heartbeat-interval " +
-            "is too small, decrease the heartbeat-interval and/or increase acceptable-heartbeat-pause. " +
-            "Otherwise it may cause too many unecessary reconnects.")
+        if (ratio < 3)
+          warn(
+            checkerKey,
+            List(path + ".acceptable-heartbeat-pause", path + ".heartbeat-interval"),
+            s"Transport failure detector ratio [$ratio] between acceptable-heartbeat-pause and heartbeat-interval " +
+              "is too small, decrease the heartbeat-interval and/or increase acceptable-heartbeat-pause. " +
+              "Otherwise it may cause too many unecessary reconnects.")
         else Nil
 
       List(w1, w2, w3).flatten
@@ -719,39 +776,55 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val reaper = config.getDuration(path + ".unreachable-nodes-reaper-interval", MILLISECONDS).millis
 
       val w1 =
-        if (heartbeatInterval < 500.millis) warn(checkerKey, path + ".heartbeat-interval",
-          s"Remote watch failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
-            "is probably too short to be meaningful. There is overhead of sending heartbeat messages " +
-            "too frequently.")
-        else if (heartbeatInterval > 10.seconds) warn(checkerKey, path + ".heartbeat-interval",
-          s"Remote watch failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
-            "is probably too long to be meaningful.")
+        if (heartbeatInterval < 500.millis)
+          warn(
+            checkerKey,
+            path + ".heartbeat-interval",
+            s"Remote watch failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
+              "is probably too short to be meaningful. There is overhead of sending heartbeat messages " +
+              "too frequently.")
+        else if (heartbeatInterval > 10.seconds)
+          warn(
+            checkerKey,
+            path + ".heartbeat-interval",
+            s"Remote watch failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
+              "is probably too long to be meaningful.")
         else Nil
 
       val w2 =
-        if (acceptable < 5.second) warn(checkerKey, path + ".acceptable-heartbeat-pause",
-          s"Remote watch failure detector acceptable-heartbeat-pause of [${acceptable.toMillis} ms] " +
-            "is probably too short to be meaningful. It may cause quarantining of remote system " +
-            "because of false failure detection caused by for example GC pauses.")
-        else if (acceptable > 1.minute) warn(checkerKey, path + ".acceptable-heartbeat-pause",
-          s"Remote watch failure detector acceptable-heartbeat-pause of [${acceptable.toMillis} ms] " +
-            "is probably too long to be meaningful.")
+        if (acceptable < 5.second)
+          warn(
+            checkerKey,
+            path + ".acceptable-heartbeat-pause",
+            s"Remote watch failure detector acceptable-heartbeat-pause of [${acceptable.toMillis} ms] " +
+              "is probably too short to be meaningful. It may cause quarantining of remote system " +
+              "because of false failure detection caused by for example GC pauses.")
+        else if (acceptable > 1.minute)
+          warn(
+            checkerKey,
+            path + ".acceptable-heartbeat-pause",
+            s"Remote watch failure detector acceptable-heartbeat-pause of [${acceptable.toMillis} ms] " +
+              "is probably too long to be meaningful.")
         else Nil
 
       val ratio = acceptable.toMillis / heartbeatInterval.toMillis
       val w3 =
-        if (ratio < 3) warn(checkerKey, List(path + ".acceptable-heartbeat-pause", path + ".heartbeat-interval"),
-          s"Remote watch failure detector ratio [$ratio] between acceptable-heartbeat-pause and heartbeat-interval " +
-            "is too small, decrease the heartbeat-interval and/or increase acceptable-heartbeat-pause. " +
-            "Otherwise it may trigger false failure detection and resulting in quarantining of remote system.")
+        if (ratio < 3)
+          warn(
+            checkerKey,
+            List(path + ".acceptable-heartbeat-pause", path + ".heartbeat-interval"),
+            s"Remote watch failure detector ratio [$ratio] between acceptable-heartbeat-pause and heartbeat-interval " +
+              "is too small, decrease the heartbeat-interval and/or increase acceptable-heartbeat-pause. " +
+              "Otherwise it may trigger false failure detection and resulting in quarantining of remote system.")
         else Nil
 
       val w4 =
-        if (reaper < heartbeatInterval) warn(
-          checkerKey,
-          List(path + ".unreachable-nodes-reaper-interval", path + ".heartbeat-interval"),
-          s"Remote watch failure detector unreachable-nodes-reaper-interval should be less than or equal to the " +
-            "heartbeat-interval")
+        if (reaper < heartbeatInterval)
+          warn(
+            checkerKey,
+            List(path + ".unreachable-nodes-reaper-interval", path + ".heartbeat-interval"),
+            s"Remote watch failure detector unreachable-nodes-reaper-interval should be less than or equal to the " +
+              "heartbeat-interval")
         else Nil
 
       List(w1, w2, w3, w4).flatten
@@ -761,15 +834,21 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     ifEnabled("retry-gate-closed-for") { checkerKey =>
       val path = remoteConfigPath("akka.remote.retry-gate-closed-for")
       val retryGate = config.getDuration(path, MILLISECONDS).millis
-      if (retryGate < 1.second) warn(checkerKey, path,
-        s"Remote retry-gate-closed-for of [${retryGate.toMillis} ms] " +
-          "is probably too short to be meaningful. This setting controls how much time should " +
-          "be elapsed before reattempting a new connection after a failed outbound connection. " +
-          "Setting it to a short interval may result in a storm of reconnect attempts. ")
-      else if (retryGate > 10.seconds) warn(checkerKey, path,
-        s"Remote retry-gate-closed-for of [${retryGate.toMillis} ms] " +
-          "is probably too long. All messages sent to the gated address are dropped during the " +
-          "gating period.")
+      if (retryGate < 1.second)
+        warn(
+          checkerKey,
+          path,
+          s"Remote retry-gate-closed-for of [${retryGate.toMillis} ms] " +
+            "is probably too short to be meaningful. This setting controls how much time should " +
+            "be elapsed before reattempting a new connection after a failed outbound connection. " +
+            "Setting it to a short interval may result in a storm of reconnect attempts. ")
+      else if (retryGate > 10.seconds)
+        warn(
+          checkerKey,
+          path,
+          s"Remote retry-gate-closed-for of [${retryGate.toMillis} ms] " +
+            "is probably too long. All messages sent to the gated address are dropped during the " +
+            "gating period.")
       else Nil
     }
 
@@ -777,10 +856,13 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     ifEnabled("prune-quarantine-marker-after") { checkerKey =>
       val path = remoteConfigPath("akka.remote.prune-quarantine-marker-after")
       val pruneQuarantine = config.getDuration(path, MILLISECONDS).millis
-      if (pruneQuarantine < 1.day) warn(checkerKey, path,
-        s"Don't change prune-quarantine-marker-after to a small value to re-enable communication with " +
-          "quarantined nodes. Such feature is not supported and any behavior between the affected systems after " +
-          "lifting the quarantine is undefined.")
+      if (pruneQuarantine < 1.day)
+        warn(
+          checkerKey,
+          path,
+          s"Don't change prune-quarantine-marker-after to a small value to re-enable communication with " +
+            "quarantined nodes. Such feature is not supported and any behavior between the affected systems after " +
+            "lifting the quarantine is undefined.")
       else Nil
     }
 
@@ -788,10 +870,14 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     ifEnabled("enabled-transports") { checkerKey =>
       val path = remoteConfigPath("akka.remote.enabled-transports")
       val transports = config.getStringList(path).asScala.toSet
-      val suspectTransports = transports - remoteConfigPath("akka.remote.netty.tcp") - remoteConfigPath("akka.remote.netty.ssl")
-      if (suspectTransports.nonEmpty) warn(checkerKey, path,
-        s"[${suspectTransports.mkString(", ")}] ${if (suspectTransports.size > 1) "are" else "is"} not a " +
-          "recommended transport for remote actor messages in production.")
+      val suspectTransports =
+        transports - remoteConfigPath("akka.remote.netty.tcp") - remoteConfigPath("akka.remote.netty.ssl")
+      if (suspectTransports.nonEmpty)
+        warn(
+          checkerKey,
+          path,
+          s"[${suspectTransports.mkString(", ")}] ${if (suspectTransports.size > 1) "are" else "is"} not a " +
+            "recommended transport for remote actor messages in production.")
       else Nil
     }
 
@@ -801,13 +887,17 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
         // artery
         config.getString("akka.remote.artery.canonical.hostname") match {
           case "<getHostAddress>" =>
-            warn(checkerKey, "akka.remote.artery.canonical.hostname",
+            warn(
+              checkerKey,
+              "akka.remote.artery.canonical.hostname",
               s"hostname is set to <getHostAddress>, which means that `InetAddress.getLocalHost.getHostAddress` " +
                 "will be used to resolve the hostname. That can result in wrong hostname in some environments, " +
                 """such as "127.0.1.1". Define the hostname explicitly instead. """ +
                 s"On this machine `InetAddress.getLocalHost.getHostAddress` is [${InetAddress.getLocalHost.getHostAddress}].")
           case "<getHostName>" =>
-            warn(checkerKey, "akka.remote.artery.canonical.hostname",
+            warn(
+              checkerKey,
+              "akka.remote.artery.canonical.hostname",
               s"hostname is set to <getHostName>, which means that `InetAddress.getLocalHost.getHostAddress` " +
                 "will be used to resolve the hostname. That can result in wrong hostname in some environments, " +
                 """such as "127.0.1.1". Define the hostname explicitly instead. """ +
@@ -820,7 +910,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
         config.getStringList(remoteConfigPath("akka.remote.enabled-transports")).asScala.toList.flatMap { t =>
           if ((t == remoteConfigPath("akka.remote.netty.tcp") && config.getString(t + ".hostname") == "") ||
             (t == remoteConfigPath("akka.remote.netty.ssl") && config.getString(t + ".hostname") == ""))
-            warn(checkerKey, t + ".hostname",
+            warn(
+              checkerKey,
+              t + ".hostname",
               s"hostname is not defined, which means that `InetAddress.getLocalHost.getHostAddress` " +
                 "will be used to resolve the hostname. That can result in wrong hostname in some environments, " +
                 """such as "localhost". Define the hostname explicitly instead. """ +
@@ -835,12 +927,15 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
 
       def checkFrameSizeAt(path: String): List[ConfigWarning] = {
         val frameSize = config.getBytes(path)
-        if (frameSize > (1024 * 1024)) warn(checkerKey, path,
-          s"You have configured maximum-frame-size to [${config.getBytes(path)} bytes]. We recommend against " +
-            "sending too large messages, since that may cause other messages to be delayed. For example, it's " +
-            "important that failure detector heartbeat messages have a chance to get through without too long delays. " +
-            "Try to split up large messages into smaller chunks, or use another communication channel (HTTP, Akka IO) " +
-            "for large payloads.")
+        if (frameSize > (1024 * 1024))
+          warn(
+            checkerKey,
+            path,
+            s"You have configured maximum-frame-size to [${config.getBytes(path)} bytes]. We recommend against " +
+              "sending too large messages, since that may cause other messages to be delayed. For example, it's " +
+              "important that failure detector heartbeat messages have a chance to get through without too long delays. " +
+              "Try to split up large messages into smaller chunks, or use another communication channel (HTTP, Akka IO) " +
+              "for large payloads.")
         else Nil
       }
 
@@ -855,8 +950,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val path = "akka.remote.default-remote-dispatcher"
       val size = dispatcherPoolSize(config.getConfig(path).withFallback(system.dispatchers.defaultDispatcherConfig))
       if (size < 2)
-        warn(checkerKey, path,
-          s"Don't use too small pool size [$size] for the default-remote-dispatcher-size.")
+        warn(checkerKey, path, s"Don't use too small pool size [$size] for the default-remote-dispatcher-size.")
       else Nil
     }
 
@@ -878,7 +972,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   private def checkAutoDown(): List[ConfigWarning] =
     ifEnabled("auto-down") { checkerKey =>
       if (isAutoDownEnabled)
-        warn(checkerKey, autoDownPath,
+        warn(
+          checkerKey,
+          autoDownPath,
           "Use Akka Split Brain Resolver instead of auto-down, since auto-down may cause the cluster to be " +
             "split into two separate disconnected clusters when there are network partitions, long garbage " +
             "collection pauses or system overload. This is especially important if you use Cluster Singleton, " +
@@ -902,39 +998,57 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val reaper = config.getDuration(reaperPath, MILLISECONDS).millis
 
       val w1 =
-        if (heartbeatInterval < 500.millis) warn(checkerKey, path + ".heartbeat-interval",
-          s"Cluster failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
-            "is probably too short to be meaningful. There is overhead of sending heartbeat messages " +
-            "too frequently.")
-        else if (heartbeatInterval > 5.seconds) warn(checkerKey, path + ".heartbeat-interval",
-          s"Cluster failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
-            "is probably too long to be meaningful.")
+        if (heartbeatInterval < 500.millis)
+          warn(
+            checkerKey,
+            path + ".heartbeat-interval",
+            s"Cluster failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
+              "is probably too short to be meaningful. There is overhead of sending heartbeat messages " +
+              "too frequently.")
+        else if (heartbeatInterval > 5.seconds)
+          warn(
+            checkerKey,
+            path + ".heartbeat-interval",
+            s"Cluster failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
+              "is probably too long to be meaningful.")
         else Nil
 
       val w2 =
-        if (acceptable < 2.second) warn(checkerKey, path + ".acceptable-heartbeat-pause",
-          s"Cluster failure detector acceptable-heartbeat-pause of [${acceptable.toMillis} ms] " +
-            "is probably too short to be meaningful. It may cause marking nodes unreachable and then " +
-            "back to reachable because of false failure detection caused by for example GC pauses.")
-        else if (acceptable > 1.minute) warn(checkerKey, path + ".acceptable-heartbeat-pause",
-          s"Cluster failure detector acceptable-heartbeat-pause of [${acceptable.toMillis}} ms] " +
-            "is probably too long to be meaningful. Note that a node marked as unreachable will " +
-            "become reachable again if the failure detector observes that it can communicate with it again, " +
-            "i.e. unreachable is not a fatal condition.")
+        if (acceptable < 2.second)
+          warn(
+            checkerKey,
+            path + ".acceptable-heartbeat-pause",
+            s"Cluster failure detector acceptable-heartbeat-pause of [${acceptable.toMillis} ms] " +
+              "is probably too short to be meaningful. It may cause marking nodes unreachable and then " +
+              "back to reachable because of false failure detection caused by for example GC pauses.")
+        else if (acceptable > 1.minute)
+          warn(
+            checkerKey,
+            path + ".acceptable-heartbeat-pause",
+            s"Cluster failure detector acceptable-heartbeat-pause of [${acceptable.toMillis}} ms] " +
+              "is probably too long to be meaningful. Note that a node marked as unreachable will " +
+              "become reachable again if the failure detector observes that it can communicate with it again, " +
+              "i.e. unreachable is not a fatal condition.")
         else Nil
 
       val ratio = acceptable.toMillis / heartbeatInterval.toMillis
       val w3 =
-        if (ratio < 3) warn(checkerKey, List(path + ".acceptable-heartbeat-pause", path + ".heartbeat-interval"),
-          s"Cluster failure detector ratio [$ratio] between acceptable-heartbeat-pause and heartbeat-interval " +
-            "is too small, decrease the heartbeat-interval and/or increase acceptable-heartbeat-pause. " +
-            "Otherwise it may trigger false failure detection and resulting in quarantining of remote system.")
+        if (ratio < 3)
+          warn(
+            checkerKey,
+            List(path + ".acceptable-heartbeat-pause", path + ".heartbeat-interval"),
+            s"Cluster failure detector ratio [$ratio] between acceptable-heartbeat-pause and heartbeat-interval " +
+              "is too small, decrease the heartbeat-interval and/or increase acceptable-heartbeat-pause. " +
+              "Otherwise it may trigger false failure detection and resulting in quarantining of remote system.")
         else Nil
 
       val w4 =
-        if (reaper < heartbeatInterval) warn(checkerKey, List(reaperPath, path + ".heartbeat-interval"),
-          s"Cluster failure detector unreachable-nodes-reaper-interval should be less than or equal to the " +
-            "heartbeat-interval")
+        if (reaper < heartbeatInterval)
+          warn(
+            checkerKey,
+            List(reaperPath, path + ".heartbeat-interval"),
+            s"Cluster failure detector unreachable-nodes-reaper-interval should be less than or equal to the " +
+              "heartbeat-interval")
         else Nil
 
       List(w1, w2, w3, w4).flatten
@@ -946,22 +1060,29 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val clusterDispatcher = config.getString(path)
       if (clusterDispatcher != "" && clusterDispatcher != defaultDispatcherPath && clusterDispatcher != internalDispatcherPath) {
         if (config.hasPath(clusterDispatcher)) {
-          val size = dispatcherPoolSize(config.getConfig(clusterDispatcher)
-            .withFallback(system.dispatchers.defaultDispatcherConfig))
-          val w1 = warn(checkerKey, path,
+          val size = dispatcherPoolSize(
+            config
+              .getConfig(clusterDispatcher)
+              .withFallback(system.dispatchers.defaultDispatcherConfig))
+          val w1 = warn(
+            checkerKey,
+            path,
             "Normally it should not be necessary to configure a separate dispatcher for the Cluster. " +
               s"The default-dispatcher should be sufficient for performing the Cluster tasks, i.e. $path should " +
               "not be changed. If you have Cluster related problems when using the default-dispatcher that is typically " +
               "an indication that you are running blocking or CPU intensive actors/tasks on the default-dispatcher. " +
               "Use dedicated dispatchers for such actors/tasks instead of running them on the default-dispatcher, " +
               "because that may starve system internal tasks.")
-          val w2 = if (size < 2)
-            warn(checkerKey, List(path, clusterDispatcher),
-              "Don't configure Cluster dispatcher with less than 2 threads.")
-          else Nil
+          val w2 =
+            if (size < 2)
+              warn(
+                checkerKey,
+                List(path, clusterDispatcher),
+                "Don't configure Cluster dispatcher with less than 2 threads.")
+            else Nil
           List(w1, w2).flatten
-        } else warn(checkerKey, clusterDispatcher,
-          s"Configured Cluster dispatcher [$clusterDispatcher] does not exist.")
+        } else
+          warn(checkerKey, clusterDispatcher, s"Configured Cluster dispatcher [$clusterDispatcher] does not exist.")
       } else Nil
     }
 
@@ -987,39 +1108,53 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
           case _ => config.getDuration(downRemovalPath, MILLISECONDS).millis
         }
 
-        val w1 = if (downRemoval != stableAfter)
-          warn(checkerKey, List(downRemovalPath, stableAfterPath),
-            s"It is normally best to configure $downRemovalPath and $stableAfterPath to the same duration. ")
-        else Nil
+        val w1 =
+          if (downRemoval != stableAfter)
+            warn(
+              checkerKey,
+              List(downRemovalPath, stableAfterPath),
+              s"It is normally best to configure $downRemovalPath and $stableAfterPath to the same duration. ")
+          else Nil
 
-        val w2 = if (downRemoval < 5.seconds)
-          warn(checkerKey, downRemovalPath,
-            s"Cluster down-removal-margin of [${downRemoval.toMillis} ms] is probably too short. There is a risk that " +
-              "persistent actors and singletons have not stopped at the non-surviving side of a network partition before " +
-              "corresponding actors are started in surviving partition. See Split Brain Resolver documentation for " +
-              "recommended configuration for different cluster sizes.")
-        else Nil
+        val w2 =
+          if (downRemoval < 5.seconds)
+            warn(
+              checkerKey,
+              downRemovalPath,
+              s"Cluster down-removal-margin of [${downRemoval.toMillis} ms] is probably too short. There is a risk that " +
+                "persistent actors and singletons have not stopped at the non-surviving side of a network partition before " +
+                "corresponding actors are started in surviving partition. See Split Brain Resolver documentation for " +
+                "recommended configuration for different cluster sizes.")
+          else Nil
 
-        val w3 = if (stableAfter < 5.seconds)
-          warn(checkerKey, stableAfterPath,
-            s"SBR stable-after of [${stableAfter.toMillis} ms] is probably too short. There is a risk that " +
-              "the SBR decision is based on incomplete information. Don't set this to a shorter duration than the " +
-              "membership dissemination time in the cluster, which depends on the cluster size. " +
-              "See Split Brain Resolver documentation for recommended configuration for different cluster sizes.")
-        else Nil
+        val w3 =
+          if (stableAfter < 5.seconds)
+            warn(
+              checkerKey,
+              stableAfterPath,
+              s"SBR stable-after of [${stableAfter.toMillis} ms] is probably too short. There is a risk that " +
+                "the SBR decision is based on incomplete information. Don't set this to a shorter duration than the " +
+                "membership dissemination time in the cluster, which depends on the cluster size. " +
+                "See Split Brain Resolver documentation for recommended configuration for different cluster sizes.")
+          else Nil
 
-        val w4 = if (isAutoDownEnabled)
-          warn(checkerKey, List(autoDownPath, sbrStrategyPath),
-            "You have enabled both auto-down and split-brain-resolver. For backwards " +
-              "compatibility reasons auto-down will be used instead of split-brain-resolver. " +
-              "Please remove the auto-down configuration.")
-        else Nil
+        val w4 =
+          if (isAutoDownEnabled)
+            warn(
+              checkerKey,
+              List(autoDownPath, sbrStrategyPath),
+              "You have enabled both auto-down and split-brain-resolver. For backwards " +
+                "compatibility reasons auto-down will be used instead of split-brain-resolver. " +
+                "Please remove the auto-down configuration.")
+          else Nil
 
         val w5 = {
           val providerClass = config.getString(downingProviderPath)
           providerClass match {
             case "com.lightbend.akka.sbr.SplitBrainResolverProvider" =>
-              warn(checkerKey, downingProviderPath,
+              warn(
+                checkerKey,
+                downingProviderPath,
                 s"Downing provider of [$providerClass] has been superceded by the open-source Split Brain Resolver included " +
                   "with Akka.  Bug fixes will in the future be applied to the open source SBR.")
 
