@@ -13,16 +13,16 @@ lazy val root = (project in file("."))
   )
   .aggregate(`akka-diagnostics`, docs)
 
-lazy val `akka-diagnostics` = Project(id = "akka-diagnostics", file("akka-diagnostics"))
+lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
   .settings(defaultSettings)
   .settings(
     Dependencies.akkaDiagnostics)
   .settings(Release.settings: _*)
   .enablePlugins(BootstrapGenjavadoc, UnidocRoot, NoPublish)
   .dependsOn(
-    addonsTestkit % "test",
+    addonsTestkit % "test"
     // so that the tests can check the sbr config
-    splitBrainResolver % "test")
+    )
   .addAkkaModuleDependency("akka-actor")
   // used for verifying the config checker
   .addAkkaModuleDependency("akka-remote", "test")
@@ -36,22 +36,6 @@ lazy val `akka-diagnostics` = Project(id = "akka-diagnostics", file("akka-diagno
           docs,
           addonsTestkit)
   )
-
-lazy val splitBrainResolver = akkaAddonsModule("akka-split-brain-resolver")
-  .settings(
-      Dependencies.akkaSplitBrainResolver,
-      TestExtras.Filter.settings)
-  .settings(Release.settings: _*)
-  .dependsOn(addonsTestkit % "test")
-  .enablePlugins(MultiNode, MultiNodeScalaTest, BootstrapGenjavadoc)
-  .addAkkaModuleDependency("akka-actor")
-  .addAkkaModuleDependency("akka-cluster")
-  .addAkkaModuleDependency("akka-coordination")
-  .addAkkaModuleDependency("akka-multi-node-testkit", "test")
-  // used in the multinode tests for sbr
-  .addAkkaModuleDependency("akka-cluster-sharding", "test")
-  .addAkkaModuleDependency("akka-cluster-tools", "test")
-  .addAkkaModuleDependency("akka-persistence", "test")
 
 // Internal testkit
 lazy val addonsTestkit = akkaAddonsModule("addons-testkit")
@@ -102,7 +86,7 @@ lazy val docs = akkaAddonsModule("docs")
       publishRsyncHost := "akkarepo@gustav.akka.io",
       resolvers += Resolver.jcenterRepo // required to resolve paradox-theme-akka
   )
-  .dependsOn(splitBrainResolver, fastFailover)
+  .dependsOn(fastFailover)
 
 lazy val fastFailover = akkaAddonsModule("akka-fast-failover")
   .settings(
