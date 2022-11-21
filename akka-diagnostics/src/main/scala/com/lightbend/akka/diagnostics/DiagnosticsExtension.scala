@@ -12,7 +12,7 @@ import scala.util.control.NonFatal
  * `DiagnosticsRecorder` for an actor system.
  */
 object DiagnosticsExtension extends ExtensionId[DiagnosticsImpl] with ExtensionIdProvider {
-  override def lookup(): ExtensionId[_ <: Extension] = DiagnosticsExtension
+  override def lookup: ExtensionId[_ <: Extension] = DiagnosticsExtension
   override def createExtension(system: ExtendedActorSystem): DiagnosticsImpl = new DiagnosticsImpl(system)
 }
 

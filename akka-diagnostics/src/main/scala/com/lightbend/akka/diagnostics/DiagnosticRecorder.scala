@@ -27,7 +27,7 @@ import akka.util.ManifestInfo
 private[akka] object DiagnosticsRecorder extends ExtensionId[DiagnosticsRecorder] with ExtensionIdProvider {
   override def get(system: ActorSystem): DiagnosticsRecorder = super.get(system)
 
-  override def lookup() = DiagnosticsRecorder
+  override def lookup = DiagnosticsRecorder
 
   override def createExtension(system: ExtendedActorSystem): DiagnosticsRecorder = new DiagnosticsRecorder(system)
 

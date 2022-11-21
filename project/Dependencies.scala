@@ -7,57 +7,25 @@ import sbt._
 import Keys._
 
 object Dependencies {
-  val Scala211 = "2.11.12"
   val Scala212 = "2.12.17"
   val Scala213 = "2.13.10"
-
-  val buildScalaVersion = System.getProperty("akka.build.scalaVersion", Scala212)
-
-  val AkkaManagementVersion = "1.0.5"
-  // play 2.6 requires 10.0.15
-  val AkkaHttpVersion_10_0 = "10.0.15"
-  val AkkaHttpVersion_10_1 = "10.1.11"
-
+  val AkkaVersion = "2.7.0"
+  val AkkaVersionInDocs = AkkaVersion.take(3)
+  val buildScalaVersion = System.getProperty("akka.build.scalaVersion", Scala213)
+  val AkkaManagementVersion = "1.2.0"
+  val AkkaHttpVersion = "10.4.0"
   val commonsLang = "org.apache.commons" % "commons-lang3" % "3.5" // ApacheV2
-
-
-  val streamContrib =                "com.typesafe.akka" %% "akka-stream-contrib"                 % "0.10"                          // ApacheV2
-
-  lazy val akkaVersion = settingKey[String]("The version of Akka to use.")
-  lazy val akkaHttpVersion = settingKey[String]("The version of Akka HTTP to use.")
-
-  val Versions = Seq(
-    akkaVersion := version213(Akka.version27, Akka.version).value,
-    akkaHttpVersion := version213(AkkaHttpVersion_10_1, AkkaHttpVersion_10_0).value,
-  )
-
-  private def version213(when213: String, default: String) =
-    Def.setting {
-      CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, n)) if n >= 13 => when213
-        case _ => default
-      }
-    }
-
-  private def akkaVersion26OrHigher() =
-    Def.setting {
-      if(akkaVersion.value.split('.')(1).toInt >= 6) true
-      else false
-    }
-
+  val streamContrib = "com.typesafe.akka" %% "akka-stream-contrib" % "0.10"// ApacheV2
 
   object Akka {
-    val version = "2.5.26"
-    val version27 = "2.7.0"
-    val partialVersion = CrossVersion.partialVersion(version).map(_.productIterator.mkString(".")).getOrElse("current")
     val org = "com.typesafe.akka"
-    val http = Def.setting { "com.typesafe.akka" %% "akka-http"   % akkaHttpVersion.value }
-    val httpCore = Def.setting { "com.typesafe.akka" %% "akka-http-core"   % akkaHttpVersion.value }
-    val httpSprayJson = Def.setting { "com.typesafe.akka" %% "akka-http-spray-json"               % akkaHttpVersion.value }
-    val httpTestKit = Def.setting { "com.typesafe.akka" %% "akka-http-testkit"   % akkaHttpVersion.value }
+    val http = Def.setting { "com.typesafe.akka" %% "akka-http"   % AkkaHttpVersion }
+    val httpCore = Def.setting { "com.typesafe.akka" %% "akka-http-core"   % AkkaHttpVersion }
+    val httpSprayJson = Def.setting { "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion }
+    val httpTestKit = Def.setting { "com.typesafe.akka" %% "akka-http-testkit"   % AkkaHttpVersion }
     val management    = "com.lightbend.akka.management" %% "akka-management" % AkkaManagementVersion
-    val akkaStreamTestKit =  "com.typesafe.akka" %% "akka-stream-testkit" % version
-    val serializationJackson = Def.setting{ org %% "akka-serialization-jackson" % akkaVersion.value }
+    val akkaStreamTestKit =  "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion
+    val serializationJackson = Def.setting{ org %% "akka-serialization-jackson" % AkkaVersion }
   }
 
 
@@ -87,11 +55,11 @@ object Dependencies {
     commonsLang, // for levenshtein distance impl
     Akka.management % Provided,
     Akka.httpSprayJson.value % Provided,
-    Akka.http.value.withRevision("10.1.10") % Test, // just needed to tie the versions down, management pulls newer version in
-    Akka.httpCore.value.withRevision("10.1.10") % Test,
-    Akka.httpTestKit.value.withRevision("10.1.10") % Test,
+    Akka.http.value % Test, // just needed to tie the versions down, management pulls newer version in
+    Akka.httpCore.value % Test,
+    Akka.httpTestKit.value % Test,
     Akka.akkaStreamTestKit % Test
-  ) ++ TestDeps.commonTestDeps ++ {if(akkaVersion26OrHigher.value)Seq(Akka.serializationJackson.value % Provided) else Seq()}
+  ) ++ TestDeps.commonTestDeps ++ Seq(Akka.serializationJackson.value % Provided)
 
   val testkit = libraryDependencies ++= Seq(
     TestDeps.scalaTest,
