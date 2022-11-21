@@ -3,7 +3,6 @@ import com.typesafe.sbt.SbtScalariform.ScalariformKeys
 import com.lightbend.paradox.sbt.ParadoxPlugin
 import akka.AkkaDependency.RichProject
 import com.typesafe.sbt.packager.docker._
-import com.typesafe.sbt.SbtMultiJvm.MultiJvmKeys.MultiJvm
 import Dependencies.{ Scala211, Scala212, Scala213, buildScalaVersion }
 
 
@@ -11,17 +10,14 @@ lazy val root = (project in file("."))
   .settings(
     name := "akka-diagnostics-root"
   )
+  .settings(dontPublish)
   .aggregate(`akka-diagnostics`, docs)
 
 lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
-  .settings(
-    Dependencies.akkaDiagnostics)
+  .settings(Dependencies.akkaDiagnostics)
   .settings(Release.settings: _*)
   .enablePlugins(BootstrapGenjavadoc, UnidocRoot)
-  .dependsOn(
-    addonsTestkit % "test"
-    // so that the tests can check the sbr config
-    )
+  .dependsOn(addonsTestkit % "test")
   .addAkkaModuleDependency("akka-actor")
   // used for verifying the config checker
   .addAkkaModuleDependency("akka-remote", "test")
@@ -50,7 +46,7 @@ lazy val docs = akkaAddonsModule("docs")
   .settings(
       name := "Akka Diagnostics",
       publish / skip := true,
-//      makeSite := makeSite.dependsOn(LocalRootProject / ScalaUnidoc / doc).value,
+//      makeSite := makeSite.dependsOn(LocalRootProject / ScalaUnidoc / doc).value,  //FIXME to be added
       Preprocess / siteSubdirName := s"api/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
       Preprocess / sourceDirectory := (LocalRootProject / ScalaUnidoc / unidoc / target).value,
       Preprocess / preprocessRules := Seq(
@@ -102,6 +98,9 @@ lazy val fastFailover = akkaAddonsModule("akka-fast-failover")
 def akkaAddonsModule(name: String): Project =
     Project(id = name.replace("/", "-"), base = file(name))
       .settings(defaultSettings)
+
+lazy val dontPublish = Seq(publish / skip := true, Compile / publishArtifact := false)
+
 
 // settings
 lazy val silencerVersion = "1.7.8"
