@@ -1,65 +1,56 @@
 import akka._
-import akka.AkkaDependency.RichProject
-import Dependencies.{ Scala212, Scala213, buildScalaVersion }
-
+import Dependencies.{ buildScalaVersion, Scala212, Scala213 }
 
 lazy val root = (project in file("."))
-  .settings(
-    name := "akka-diagnostics-root"
-  )
+  .settings(name := "akka-diagnostics-root")
   .settings(dontPublish)
   .aggregate(`akka-diagnostics`, docs)
 
 lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
-  .settings(Dependencies.akkaDiagnostics)
-  .dependsOn(addonsTestkit % "test")
+  .settings(libraryDependencies ++= Dependencies.akkaDiagnostics)
+  .dependsOn(addonsTestkit % Test)
 
 // Internal testkit
 lazy val addonsTestkit = akkaAddonsModule("addons-testkit")
-  .settings(
-    Dependencies.testkit
-  )
-  .addAkkaModuleDependency("akka-testkit")
+  .settings(libraryDependencies ++= Dependencies.testkit)
 
 lazy val docs = akkaAddonsModule("docs")
   .enablePlugins(AkkaParadoxPlugin, ParadoxSitePlugin, PreprocessPlugin, PublishRsyncPlugin)
   .settings(dontPublish)
   .settings(
-      name := "Akka Diagnostics",
+    name := "Akka Diagnostics",
 //      makeSite := makeSite.dependsOn(LocalRootProject / ScalaUnidoc / doc).value,  //FIXME to be added
-      Preprocess / siteSubdirName := s"api/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
-      Preprocess / sourceDirectory := (LocalRootProject / ScalaUnidoc / unidoc / target).value,
-      previewPath := (Paradox / siteSubdirName).value,
-      paradoxGroups := Map("Languages" -> Seq("Java", "Scala")),
-      Paradox / siteSubdirName := s"docs/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
-      Compile / paradoxProperties ++= Map(
-          "version" -> version.value,
-          "project.url" -> "https://doc.akka.io/docs/akka-diagnostics/current/",
-          "canonical.base_url" -> "https://doc.akka.io/docs/akka-diagnostics/current",
-          "akka.version27" -> Dependencies.AkkaVersion,
-          "scala.binaryVersion" -> scalaBinaryVersion.value,
-          "extref.scaladoc.base_url" -> s"/${(Preprocess / siteSubdirName).value}/",
-          "extref.javadoc.base_url" -> s"/japi/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
-          "scaladoc.akka.persistence.gdpr.base_url" -> s"/api/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
-          "extref.akka.base_url" -> s"https://doc.akka.io/docs/akka/${Dependencies.AkkaVersionInDocs}/%s",
-          "scaladoc.akka.base_url" -> s"https://doc.akka.io/api/akka/${Dependencies.AkkaVersionInDocs}",
-          "extref.akka-http.base_url" -> s"https://doc.akka.io/docs/akka-http/${Dependencies.AkkaHttpVersion}/%s",
-          "scaladoc.akka.http.base_url" -> s"https://doc.akka.io/api/akka-http/${Dependencies.AkkaHttpVersion}/",
-          "snip.github_link" -> "false"
-      ),
-      ApidocPlugin.autoImport.apidocRootPackage := "akka",
-      apidocRootPackage := "akka",
-      resolvers += Resolver.jcenterRepo, // required to resolve paradox-theme-akka
-      publishRsyncArtifacts += makeSite.value -> "www/",
-      publishRsyncHost := "akkarepo@gustav.akka.io"
-  )
+    Preprocess / siteSubdirName := s"api/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
+    Preprocess / sourceDirectory := (LocalRootProject / ScalaUnidoc / unidoc / target).value,
+    previewPath := (Paradox / siteSubdirName).value,
+    paradoxGroups := Map("Languages" -> Seq("Java", "Scala")),
+    Paradox / siteSubdirName := s"docs/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
+    Compile / paradoxProperties ++= Map(
+      "version" -> version.value,
+      "project.url" -> "https://doc.akka.io/docs/akka-diagnostics/current/",
+      "canonical.base_url" -> "https://doc.akka.io/docs/akka-diagnostics/current",
+      "akka.version27" -> Dependencies.AkkaVersion,
+      "scala.binaryVersion" -> scalaBinaryVersion.value,
+      "extref.scaladoc.base_url" -> s"/${(Preprocess / siteSubdirName).value}/",
+      "extref.javadoc.base_url" -> s"/japi/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
+      "scaladoc.akka.persistence.gdpr.base_url" -> s"/api/akka-diagnostics/${if (isSnapshot.value) "snapshot"
+      else version.value}",
+      "extref.akka.base_url" -> s"https://doc.akka.io/docs/akka/${Dependencies.AkkaVersionInDocs}/%s",
+      "scaladoc.akka.base_url" -> s"https://doc.akka.io/api/akka/${Dependencies.AkkaVersionInDocs}",
+      "extref.akka-http.base_url" -> s"https://doc.akka.io/docs/akka-http/${Dependencies.AkkaHttpVersion}/%s",
+      "scaladoc.akka.http.base_url" -> s"https://doc.akka.io/api/akka-http/${Dependencies.AkkaHttpVersion}/",
+      "snip.github_link" -> "false"),
+    ApidocPlugin.autoImport.apidocRootPackage := "akka",
+    apidocRootPackage := "akka",
+    resolvers += Resolver.jcenterRepo, // required to resolve paradox-theme-akka
+    publishRsyncArtifacts += makeSite.value -> "www/",
+    publishRsyncHost := "akkarepo@gustav.akka.io")
 
 def akkaAddonsModule(name: String): Project =
-    Project(id = name.replace("/", "-"), base = file(name))
-      .settings(defaultSettings)
+  Project(id = name.replace("/", "-"), base = file(name))
+    .settings(defaultSettings)
 
 lazy val dontPublish = Seq(publish / skip := true, Compile / publishArtifact := false)
-
 
 // settings
 lazy val silencerVersion = "1.7.8"
