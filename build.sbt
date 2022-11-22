@@ -12,7 +12,6 @@ lazy val root = (project in file("."))
 
 lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
   .settings(Dependencies.akkaDiagnostics)
-  .enablePlugins(BootstrapGenjavadoc, UnidocRoot)
   .dependsOn(addonsTestkit % "test")
   .addAkkaModuleDependency("akka-actor")
   // used for verifying the config checker
@@ -22,11 +21,6 @@ lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
   .addAkkaModuleDependency("akka-cluster-sharding", "test")
   .addAkkaModuleDependency("akka-cluster-tools", "test")
   .addAkkaModuleDependency("akka-persistence", "test")
-  .settings(
-      UnidocRoot.autoImport.unidocRootIgnoreProjects := List(
-          docs,
-          addonsTestkit)
-  )
 
 // Internal testkit
 lazy val addonsTestkit = akkaAddonsModule("addons-testkit")

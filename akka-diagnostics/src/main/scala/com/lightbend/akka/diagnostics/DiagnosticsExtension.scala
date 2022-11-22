@@ -8,7 +8,7 @@ import akka.actor.{ ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProv
 import scala.util.control.NonFatal
 
 /**
- * The diagnostics extension enables both the [[com.lightbend.akka.diagnostics.ConfigChecker]] and the
+ * The diagnostics extension enables the
  * `DiagnosticsRecorder` for an actor system.
  */
 object DiagnosticsExtension extends ExtensionId[DiagnosticsImpl] with ExtensionIdProvider {
@@ -17,7 +17,6 @@ object DiagnosticsExtension extends ExtensionId[DiagnosticsImpl] with ExtensionI
 }
 
 class DiagnosticsImpl(system: ExtendedActorSystem) extends Extension {
-  ConfigChecker.reportIssues(system)
   StarvationDetector.checkSystemDispatcher(system)
   try DiagnosticsRecorder(system).runStartupReport()
   catch {

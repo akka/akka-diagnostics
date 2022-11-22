@@ -189,9 +189,6 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
     appendVersions(sb)
     appendJson(sb, "  ", "classpath", classpath)
 
-    appendConfigurationWarningsJson(sb)
-    sb.append(",\n")
-
     appendStartupSystemMetricsJson(sb)
     sb.append(",\n")
 
@@ -290,24 +287,6 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
       .parseMap(Map("excluded-sensitive-paths" -> excludedSensitive.toSeq.asJava).asJava)
       .withFallback(result2)
     result3
-  }
-
-  private def appendConfigurationWarningsJson(sb: StringBuilder): Unit = {
-    val warnings = new ConfigChecker(system).check().warnings
-    appendJsonName(sb, "  ", "configuration-warnings").append("[")
-    if (warnings.nonEmpty) sb.append("\n")
-    warnings.zipWithIndex.foreach {
-      case (w, i) =>
-        sb.append("    {\n")
-        appendJson(sb, "      ", "checker-key", w.checkerKey)
-        appendJson(sb, "      ", "message", w.message.replace('"', '\''))
-        appendJson(sb, "      ", "properties", w.propertiesAsString)
-        appendJson(sb, "      ", "defaults", w.defaultsAsString, end = true)
-        sb.append("\n    }")
-        if (i != warnings.size - 1)
-          sb.append(",\n")
-    }
-    sb.append("]")
   }
 
   private def appendStartupSystemMetricsJson(sb: StringBuilder): Unit = {
