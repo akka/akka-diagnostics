@@ -8,8 +8,7 @@ import akka.actor.{ ExtendedActorSystem, Extension, ExtensionId, ExtensionIdProv
 import scala.util.control.NonFatal
 
 /**
- * The diagnostics extension enables the
- * `DiagnosticsRecorder` for an actor system.
+ * The diagnostics extension enables the `DiagnosticsRecorder` for an actor system.
  */
 object DiagnosticsExtension extends ExtensionId[DiagnosticsImpl] with ExtensionIdProvider {
   override def lookup: ExtensionId[_ <: Extension] = DiagnosticsExtension
@@ -23,7 +22,7 @@ class DiagnosticsImpl(system: ExtendedActorSystem) extends Extension {
     case NonFatal(e) =>
       system.log.warning(
         "cannot start DiagnosticsRecorder, please configure section akka.diagnostics.recorder " +
-          "(to correct error or turn off this feature): {}",
+        "(to correct error or turn off this feature): {}",
         e.getMessage)
   }
 

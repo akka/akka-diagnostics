@@ -50,20 +50,20 @@ private[akka] object DiagnosticsRecorder extends ExtensionId[DiagnosticsRecorder
    */
   @Description(
     "Akka Diagnostics Recorder writes configuration and system information to a " +
-      "file that can be attached to your Lightbend support cases.")
+    "file that can be attached to your Lightbend support cases.")
   trait DiagnosticsRecorderMBean {
     @Description("The location of the diagnostics file.")
     def getReportFileLocation: String
 
     @Description(
       "Capture a configured number of thread dumps and additional metrics and " +
-        "append to the diagnostics report file.")
+      "append to the diagnostics report file.")
     def collectThreadDumps(): String
 
     @Description(
       "Capture a given number of thread dumps and additional metrics and " +
-        "append to the diagnostics report file.")
-    def collectThreadDumps(@Description("number of thread dumps")@Name("count") count: java.lang.Integer): String
+      "append to the diagnostics report file.")
+    def collectThreadDumps(@Description("number of thread dumps") @Name("count") count: java.lang.Integer): String
   }
 }
 
@@ -203,7 +203,7 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
   private def classpath: String =
     system.dynamicAccess.classLoader match {
       case cl: URLClassLoader => cl.getURLs.map(_.getFile).mkString(":")
-      case _ => System.getProperty("java.class.path")
+      case _                  => System.getProperty("java.class.path")
     }
 
   private def appendVersions(sb: StringBuilder): Unit = {
@@ -211,7 +211,7 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
 
     val akkaVersion = versions.get("akka-actor") match {
       case Some(v) => v.version
-      case None => system.settings.ConfigVersion
+      case None    => system.settings.ConfigVersion
     }
     appendJson(sb, "  ", "akka-version", akkaVersion)
 
@@ -303,18 +303,17 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
     appendJson(sb, "    ", "heap-committed", heap.getCommitted)
     appendJson(sb, "    ", "os-processors", osMBean.getAvailableProcessors)
 
-    memPoolMBean.asScala.zipWithIndex.foreach {
-      case (memPool, i) =>
-        val usage = memPool.getUsage
-        appendJsonName(sb, "    ", "mem-pool-" + i).append("{\n")
-        appendJson(sb, "      ", "name", memPool.getName)
-        appendJson(sb, "      ", "type", memPool.getType.toString)
-        appendJson(sb, "      ", "init", usage.getInit)
-        appendJson(sb, "      ", "max", usage.getMax)
-        appendJson(sb, "      ", "used", usage.getUsed)
-        appendJson(sb, "      ", "committed", usage.getCommitted, end = true)
-        sb.append("\n    }")
-        if (i != memPoolMBean.size - 1) sb.append(",\n")
+    memPoolMBean.asScala.zipWithIndex.foreach { case (memPool, i) =>
+      val usage = memPool.getUsage
+      appendJsonName(sb, "    ", "mem-pool-" + i).append("{\n")
+      appendJson(sb, "      ", "name", memPool.getName)
+      appendJson(sb, "      ", "type", memPool.getType.toString)
+      appendJson(sb, "      ", "init", usage.getInit)
+      appendJson(sb, "      ", "max", usage.getMax)
+      appendJson(sb, "      ", "used", usage.getUsed)
+      appendJson(sb, "      ", "committed", usage.getCommitted, end = true)
+      sb.append("\n    }")
+      if (i != memPoolMBean.size - 1) sb.append(",\n")
     }
     sb.append("\n  }")
   }
@@ -460,10 +459,10 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
       if (i == 0 && ti.getLockInfo != null) {
         import java.lang.Thread.State._
         ti.getThreadState match {
-          case BLOCKED => appendFrame("  -  blocked on ", ti.getLockInfo)
-          case WAITING => appendFrame("  -  waiting on ", ti.getLockInfo)
+          case BLOCKED       => appendFrame("  -  blocked on ", ti.getLockInfo)
+          case WAITING       => appendFrame("  -  waiting on ", ti.getLockInfo)
           case TIMED_WAITING => appendFrame("  -  waiting on ", ti.getLockInfo)
-          case _ =>
+          case _             =>
         }
       }
 
@@ -535,8 +534,8 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
    * INTERNAL API
    */
   private[akka] class DiagnosticsRecorderMBeanImpl
-    extends StandardMBean(classOf[DiagnosticsRecorderMBean])
-    with DiagnosticsRecorderMBean {
+      extends StandardMBean(classOf[DiagnosticsRecorderMBean])
+      with DiagnosticsRecorderMBean {
 
     override lazy val getReportFileLocation: String = reportFile.getAbsolutePath
 
@@ -554,7 +553,7 @@ private[akka] class DiagnosticsRecorder(system: ExtendedActorSystem) extends Ext
         s"One thread dump will be collected and written to [$getReportFileLocation] "
       else
         s"[$count] thread dumps will be collected and written to [$getReportFileLocation] " +
-          s"with [${collectThreadDumpsInterval.toMillis} ms] interval."
+        s"with [${collectThreadDumpsInterval.toMillis} ms] interval."
     }
 
     private def capThreadDumpsCount(c: Int): Int =

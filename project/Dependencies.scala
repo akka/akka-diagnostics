@@ -24,7 +24,10 @@ object Dependencies {
     val httpSprayJson = Def.setting { "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion }
     val httpTestKit = Def.setting { "com.typesafe.akka" %% "akka-http-testkit"   % AkkaHttpVersion }
     val management    = "com.lightbend.akka.management" %% "akka-management" % AkkaManagementVersion
+    val akkaActorTestKit = "com.typesafe.akka" %% "akka-actor" % AkkaVersion % Test
     val akkaStreamTestKit =  "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion
+    val akkaTestkit = "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test
+
     val serializationJackson = Def.setting{ org %% "akka-serialization-jackson" % AkkaVersion }
   }
 
@@ -33,23 +36,20 @@ object Dependencies {
   object TestDeps {
     val scalaTest = "org.scalatest"     %% "scalatest"     % "3.0.8"
     val junit      = "junit"                      %  "junit"          % "4.12" // Common Public License 1.0
-
-    val commonsIo  = "commons-io"                 %  "commons-io"     % "2.4"     % "test" // ApacheV2
-    val levelDB    = "org.iq80.leveldb"           %  "leveldb"        % "0.7"     % "test" // ApacheV2
-    val levelDBAll = "org.fusesource.leveldbjni"  %  "leveldbjni-all" % "1.8"     % "test" // ApacheV2
-    val h2         = "com.h2database"             %  "h2"             % "1.4.197" % "test" // MPL 2.0 / EPL 1.0
+    val commonsIo  = "commons-io"                 %  "commons-io"     % "2.4"     % Test // ApacheV2
+    val levelDB    = "org.iq80.leveldb"           %  "leveldb"        % "0.7"     % Test // ApacheV2
+    val levelDBAll = "org.fusesource.leveldbjni"  %  "leveldbjni-all" % "1.8"     % Test // ApacheV2
+    val h2         = "com.h2database"             %  "h2"             % "1.4.197" % Test // MPL 2.0 / EPL 1.0
     val scalaTestIt = scalaTest  % "it,test" // ApacheV2
-    val wiremock = "com.github.tomakehurst" % "wiremock-jre8" % "2.21.0" % "test" // ApacheV2
-
+    val wiremock = "com.github.tomakehurst" % "wiremock-jre8" % "2.21.0" % Test // ApacheV2
     val commonTestDeps = Seq(
-      scalaTest  % "test", // ApacheV2
-      junit      % "test"  // Common Public License 1.0
+      scalaTest  % Test, // ApacheV2
+      junit      % Test  // Common Public License 1.0
     )
   }
 
   // == dependencies for individual modules ==
   // Akka dependencies are added on each project using `addAkkaModuleDependency` to depend on akka sources more easily
-
 
   val akkaDiagnostics = libraryDependencies ++= Seq(
     commonsLang, // for levenshtein distance impl
@@ -63,6 +63,6 @@ object Dependencies {
 
   val testkit = libraryDependencies ++= Seq(
     TestDeps.scalaTest,
-    TestDeps.junit,
+    TestDeps.junit
   )
 }

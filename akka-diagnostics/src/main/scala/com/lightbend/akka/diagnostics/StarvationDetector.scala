@@ -49,18 +49,18 @@ abstract class StarvationDetectorSettings { _: StarvationDetectorSettings.Starva
 }
 object StarvationDetectorSettings {
   def apply(
-    checkInterval: FiniteDuration,
-    initialDelay: FiniteDuration,
-    maxDelayWarningThreshold: FiniteDuration,
-    warningInterval: FiniteDuration): StarvationDetectorSettings =
+      checkInterval: FiniteDuration,
+      initialDelay: FiniteDuration,
+      maxDelayWarningThreshold: FiniteDuration,
+      warningInterval: FiniteDuration): StarvationDetectorSettings =
     apply(checkInterval, initialDelay, maxDelayWarningThreshold, warningInterval, 5)
 
   def apply(
-    checkInterval: FiniteDuration,
-    initialDelay: FiniteDuration,
-    maxDelayWarningThreshold: FiniteDuration,
-    warningInterval: FiniteDuration,
-    threadTraceLimit: Int): StarvationDetectorSettings =
+      checkInterval: FiniteDuration,
+      initialDelay: FiniteDuration,
+      maxDelayWarningThreshold: FiniteDuration,
+      warningInterval: FiniteDuration,
+      threadTraceLimit: Int): StarvationDetectorSettings =
     StarvationDetectorSettingsImpl(
       checkInterval,
       initialDelay,
@@ -70,19 +70,19 @@ object StarvationDetectorSettings {
 
   /** Java API */
   def create(
-    checkInterval: FiniteDuration,
-    initialDelay: FiniteDuration,
-    maxDelayWarningThreshold: FiniteDuration,
-    warningInterval: FiniteDuration): StarvationDetectorSettings =
+      checkInterval: FiniteDuration,
+      initialDelay: FiniteDuration,
+      maxDelayWarningThreshold: FiniteDuration,
+      warningInterval: FiniteDuration): StarvationDetectorSettings =
     apply(checkInterval, initialDelay, maxDelayWarningThreshold, warningInterval)
 
   /** Java API */
   def create(
-    checkInterval: FiniteDuration,
-    initialDelay: FiniteDuration,
-    maxDelayWarningThreshold: FiniteDuration,
-    warningInterval: FiniteDuration,
-    threadTraceLimit: Int): StarvationDetectorSettings =
+      checkInterval: FiniteDuration,
+      initialDelay: FiniteDuration,
+      maxDelayWarningThreshold: FiniteDuration,
+      warningInterval: FiniteDuration,
+      threadTraceLimit: Int): StarvationDetectorSettings =
     apply(checkInterval, initialDelay, maxDelayWarningThreshold, warningInterval, threadTraceLimit)
 
   def fromConfig(config: Config): StarvationDetectorSettings = {
@@ -99,19 +99,19 @@ object StarvationDetectorSettings {
       finiteDuration("warning-interval"),
       config.getString("thread-traces-limit") match {
         case "infinite" => Integer.MAX_VALUE
-        case x => x.toInt
+        case x          => x.toInt
       })
   }
 
   /** INTERNAL API */
   @InternalApi
   private[StarvationDetectorSettings] final case class StarvationDetectorSettingsImpl(
-    checkInterval: FiniteDuration,
-    initialDelay: FiniteDuration,
-    maxDelayWarningThreshold: FiniteDuration,
-    warningInterval: FiniteDuration,
-    threadTraceLimit: Int)
-    extends StarvationDetectorSettings {}
+      checkInterval: FiniteDuration,
+      initialDelay: FiniteDuration,
+      maxDelayWarningThreshold: FiniteDuration,
+      warningInterval: FiniteDuration,
+      threadTraceLimit: Int)
+      extends StarvationDetectorSettings {}
 }
 
 object StarvationDetector {
@@ -146,10 +146,10 @@ object StarvationDetector {
    * down to shutdown the starvation detector thread.
    */
   def checkExecutionContext(
-    ec: ExecutionContext,
-    log: LoggingAdapter,
-    config: StarvationDetectorSettings,
-    hasTerminated: () => Boolean): Unit =
+      ec: ExecutionContext,
+      log: LoggingAdapter,
+      config: StarvationDetectorSettings,
+      hasTerminated: () => Boolean): Unit =
     if (config.isEnabled) {
       val thread = new StarvationDetectorThread(ec, log, config, hasTerminated)
       thread.setDaemon(true)
@@ -166,10 +166,10 @@ object StarvationDetector {
    * down to shutdown the starvation detector thread.
    */
   def checkExecutionContext(
-    ec: ExecutionContext,
-    log: LoggingAdapter,
-    config: StarvationDetectorSettings,
-    hasTerminated: BooleanSupplier): Unit =
+      ec: ExecutionContext,
+      log: LoggingAdapter,
+      config: StarvationDetectorSettings,
+      hasTerminated: BooleanSupplier): Unit =
     checkExecutionContext(ec, log, config, hasTerminated.getAsBoolean _)
 
   private type StackTrace = Array[StackTraceElement]
@@ -179,11 +179,11 @@ object StarvationDetector {
    */
   @InternalApi
   private[akka] class StarvationDetectorThread(
-    ec: ExecutionContext,
-    log: LoggingAdapter,
-    config: StarvationDetectorSettings,
-    hasTerminated: () => Boolean)
-    extends Thread {
+      ec: ExecutionContext,
+      log: LoggingAdapter,
+      config: StarvationDetectorSettings,
+      hasTerminated: () => Boolean)
+      extends Thread {
     import config._
 
     val ecName = ec.toString
@@ -219,11 +219,11 @@ object StarvationDetector {
 
                 if (threadStatuses.isEmpty) {
                   s"No dispatcher thread found running. The cause for the task scheduling delay is likely " +
-                    "caused by external causes and not by thread starvation. Possible causes could be GC pauses, " +
-                    "general CPU overload or scheduling issues, pauses due to a VM or container environment."
+                  "caused by external causes and not by thread starvation. Possible causes could be GC pauses, " +
+                  "general CPU overload or scheduling issues, pauses due to a VM or container environment."
                 } else {
                   s"Thread states (total ${threadStatuses.size} thread): $states\n" +
-                    s"Stack traces:\n$stacks"
+                  s"Stack traces:\n$stacks"
                 }
               case Failure(ex) =>
                 s"[Could not get thread info because ${ex.toString}]"
@@ -231,12 +231,12 @@ object StarvationDetector {
 
           log.warning(
             s"Exceedingly long scheduling time on ExecutionContext $ecName. " +
-              s"Starvation detector task was only executed after ${lasted / 1000000} ms which is " +
-              s"longer than the warning threshold of $maxDelayWarningThreshold. " +
-              s"This might be a sign of thread, CPU, or dispatcher starvation. " +
-              s"This can be caused by blocking calls, CPU overload, GC, or overlong work units. " +
-              s"See the below information for hints about what could be the cause. " +
-              s"Next warning will be shown in $warningInterval.\n\n$info")
+            s"Starvation detector task was only executed after ${lasted / 1000000} ms which is " +
+            s"longer than the warning threshold of $maxDelayWarningThreshold. " +
+            s"This might be a sign of thread, CPU, or dispatcher starvation. " +
+            s"This can be caused by blocking calls, CPU overload, GC, or overlong work units. " +
+            s"See the below information for hints about what could be the cause. " +
+            s"Next warning will be shown in $warningInterval.\n\n$info")
 
           nextWarningAfterNanos = endNanos + warningInterval.toNanos
         }
@@ -281,7 +281,7 @@ object StarvationDetector {
     private def statusOf(thread: Thread): ThreadStatus = ThreadStatus(thread, thread.getState, thread.getStackTrace)
     private def threadsOfExecutor(ec: ExecutionContext): Seq[Thread] = ec match {
       case x: Dispatcher => threadsOfExecutorService(getDispatcherES(x).executor)
-      case _ => Nil
+      case _             => Nil
     }
     private def threadsOfExecutorService(es: ExecutorService): Seq[Thread] = threadNamePrefix(es) match {
       case Some(prefix) =>
@@ -306,24 +306,25 @@ object StarvationDetector {
           s"Failed to extract thread prefix, unsupported executor service type [${es.getClass.toString}], starvation will not be detected for this dispatcher.")
     }
     private def threadNamePrefix(es: ExecutorService): Option[String] = es match {
-      case ak: AkkaForkJoinPool => Some(getAkkaFJPFactory(ak).name)
-      case tpe: ThreadPoolExecutor => Some(getThreadPoolExecutorFactory(tpe).name)
+      case ak: AkkaForkJoinPool     => Some(getAkkaFJPFactory(ak).name)
+      case tpe: ThreadPoolExecutor  => Some(getThreadPoolExecutorFactory(tpe).name)
       case ap: AffinityPoolAccessor => Some(getAffinityPoolFactory(ap).name)
-      case _ => None
+      case _                        => None
     }
     private def isSleepingFJThread(trace: StackTrace): Boolean =
       trace.length >= 2 &&
-        trace
+      trace
         .take(5)
         .exists(t =>
           Problem.classMethod("akka.dispatch.forkjoin.ForkJoinPool.scan")(t) ||
-            Problem.classMethod("java.util.concurrent.ForkJoinPool.scan")(t))
+          Problem.classMethod("java.util.concurrent.ForkJoinPool.scan")(t))
 
     private def topStacks(threadStacks: Seq[ThreadStatus]): String = {
       val allStacks =
         threadStacks
           .map(
-            _.mapTrace(_.takeWhile(!_.getClassName.endsWith("TaskInvocation")))) // TaskInvocation.run is the last frame belonging to Akka's scheduler impl
+            _.mapTrace(_.takeWhile(!_.getClassName.endsWith("TaskInvocation")))
+          ) // TaskInvocation.run is the last frame belonging to Akka's scheduler impl
 
       val filteredStacksWithoutEmpty =
         allStacks
@@ -353,30 +354,29 @@ object StarvationDetector {
         val omittedGroups =
           if (traceGroups.size > toTake)
             s"traces for ${traceGroups.drop(toTake).map(_._2.size).sum} threads were omitted. Increase " +
-              s"`akka.diagnostics.starvation-detector.thread-traces-limit` to show more stack traces, "
+            s"`akka.diagnostics.starvation-detector.thread-traces-limit` to show more stack traces, "
           else ""
 
         traceGroups
           .take(toTake)
-          .map {
-            case ((topElement, topState), els) =>
-              val problem = Problem.WellKnownProblems.find(_.stackTraceFilter(topElement))
-              val problemDesc = problem
-                .map { p =>
-                  s"\n\nPotential issue '${p.name}': ${p.description}${p.uri.map(uri => s" Find more information at $uri.").getOrElse("")}"
-                }
-                .getOrElse("")
+          .map { case ((topElement, topState), els) =>
+            val problem = Problem.WellKnownProblems.find(_.stackTraceFilter(topElement))
+            val problemDesc = problem
+              .map { p =>
+                s"\n\nPotential issue '${p.name}': ${p.description}${p.uri.map(uri => s" Find more information at $uri.").getOrElse("")}"
+              }
+              .getOrElse("")
 
-              f"${els.size}%3d thread(s) in state: $topState%s ${topElement.head}\n" +
-                topElement.drop(1).map(el => s"    $el").mkString("\n") + problemDesc
+            f"${els.size}%3d thread(s) in state: $topState%s ${topElement.head}\n" +
+            topElement.drop(1).map(el => s"    $el").mkString("\n") + problemDesc
           }
           .mkString("\n\n") +
-          s"\n\nAdditionally, $omittedGroups" +
-          s"$numEmpty threads reported an empty stack trace, and " +
-          s"$numSleepingPoolThread threads were sleeping pool threads waiting for work."
+        s"\n\nAdditionally, $omittedGroups" +
+        s"$numEmpty threads reported an empty stack trace, and " +
+        s"$numSleepingPoolThread threads were sleeping pool threads waiting for work."
       } else {
         s"No active threads found ($numEmpty threads reported an empty stack trace," +
-          s"$numSleepingPoolThread threads were sleeping pool threads waiting for work)"
+        s"$numSleepingPoolThread threads were sleeping pool threads waiting for work)"
       }
     }
 
@@ -385,9 +385,8 @@ object StarvationDetector {
         .groupBy(_.state)
         .toVector
         .sortBy(_._1.name())
-        .map {
-          case (state, els) =>
-            f"${els.size}%3d $state"
+        .map { case (state, els) =>
+          f"${els.size}%3d $state"
         }
         .mkString(" ")
     }

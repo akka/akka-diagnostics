@@ -66,41 +66,39 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
           () => system.whenTerminated.isCompleted)
       }
       "log a warning if the dispatcher is busy for long periods of time" should {
-        AntiPatterns.foreach {
-          case AntiPattern(name, expected, block) =>
-            name in {
-              def runOne(i: Int, remaining: Int): Future[Unit] =
-                if (remaining > 0)
-                  Future {
-                    Try(block()) // not interested in the error, just showing the anti-pattern
-                    ()
-                  }.flatMap(_ => runOne(i, remaining - 1))
-                else Future.successful(())
+        AntiPatterns.foreach { case AntiPattern(name, expected, block) =>
+          name in {
+            def runOne(i: Int, remaining: Int): Future[Unit] =
+              if (remaining > 0)
+                Future {
+                  Try(block()) // not interested in the error, just showing the anti-pattern
+                  ()
+                }.flatMap(_ => runOne(i, remaining - 1))
+              else Future.successful(())
 
-              resetWarningInterval()
+            resetWarningInterval()
 
-              val pattern = s"(?s)Exceedingly long scheduling time on ExecutionContext.*\\Q$expected\\E.*".r
-              EventFilter
-                .custom(
-                  {
-                    case Logging.Warning(_, _, message: String) =>
-                      if (pattern.findFirstIn(message).isEmpty) {
-                        println(s"Unexpected warning: \n$message")
-                        false
-                      } else if (message.contains("total 0 thread")) {
-                        println(s"Detector logged warning but it does not contain any thread stacks:\n$message")
-                        false
-                      } else true
+            val pattern = s"(?s)Exceedingly long scheduling time on ExecutionContext.*\\Q$expected\\E.*".r
+            EventFilter
+              .custom(
+                { case Logging.Warning(_, _, message: String) =>
+                  if (pattern.findFirstIn(message).isEmpty) {
+                    println(s"Unexpected warning: \n$message")
+                    false
+                  } else if (message.contains("total 0 thread")) {
+                    println(s"Detector logged warning but it does not contain any thread stacks:\n$message")
+                    false
+                  } else true
 
-                  },
-                  occurrences = 1)
-                .intercept {
-                  val numIterations = 2 // 5 * numThreads  iterations * 2 tasks * 100ms / numThreads = 2 seconds run time
+                },
+                occurrences = 1)
+              .intercept {
+                val numIterations = 2 // 5 * numThreads  iterations * 2 tasks * 100ms / numThreads = 2 seconds run time
 
-                  val result = Future.traverse(1 to (numThreads * 5))(runOne(_, numIterations))
-                  Await.result(result, 10.seconds)
-                }
-            }
+                val result = Future.traverse(1 to (numThreads * 5))(runOne(_, numIterations))
+                Await.result(result, 10.seconds)
+              }
+          }
         }
       }
       "not log a warning if the dispatcher is busy for an amount of small non-blocking tasks" in {
@@ -132,9 +130,8 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
     val res = Thread.enumerate(threads)
     threads
       .take(res)
-      .collect {
-        case t: StarvationDetectorThread =>
-          t
+      .collect { case t: StarvationDetectorThread =>
+        t
       }
       .foreach(_.nextWarningAfterNanos = 0L)
   }

@@ -60,10 +60,10 @@ object AkkaSpec {
       .dropWhile(!_.startsWith(startFrom))
       // then continue to the next entry after classToStartFrom that makes sense
       .dropWhile {
-        case `startFrom` => true
+        case `startFrom`                            => true
         case str if str.startsWith(startFrom + "$") => true // lambdas inside startFrom etc
-        case str if isAbstractClass(str) => true
-        case _ => false
+        case str if isAbstractClass(str)            => true
+        case _                                      => false
       }
 
     if (filteredStack.isEmpty)
@@ -74,9 +74,8 @@ object AkkaSpec {
   }
 
   /**
-   * Sanitize the `name` to be used as valid actor system name by
-   * replacing invalid characters. `name` may for example be a fully qualified
-   * class name and then the short class name will be used.
+   * Sanitize the `name` to be used as valid actor system name by replacing invalid characters. `name` may for example
+   * be a fully qualified class name and then the short class name will be used.
    */
   def scrubActorSystemName(name: String): String = {
     name
@@ -89,16 +88,20 @@ object AkkaSpec {
 }
 
 abstract class AkkaSpec(_system: ActorSystem)
-  extends TestKit(_system) with WordSpecLike with Matchers with BeforeAndAfterAll
-  // TODO not public API with WatchedByCoroner
-  // TODO deprecated: with ConversionCheckedTripleEquals
-  with ScalaFutures {
+    extends TestKit(_system)
+    with WordSpecLike
+    with Matchers
+    with BeforeAndAfterAll
+    // TODO not public API with WatchedByCoroner
+    // TODO deprecated: with ConversionCheckedTripleEquals
+    with ScalaFutures {
 
   implicit val patience = PatienceConfig(testKitSettings.DefaultTimeout.duration)
 
-  def this(config: Config) = this(ActorSystem(
-    AkkaSpec.testNameFromCallStack(classOf[AkkaSpec]),
-    ConfigFactory.load(config.withFallback(AkkaSpec.testConf))))
+  def this(config: Config) = this(
+    ActorSystem(
+      AkkaSpec.testNameFromCallStack(classOf[AkkaSpec]),
+      ConfigFactory.load(config.withFallback(AkkaSpec.testConf))))
 
   def this(s: String) = this(ConfigFactory.parseString(s))
 
@@ -138,7 +141,7 @@ abstract class AkkaSpec(_system: ActorSystem)
       def mute(clazz: Class[_]): Unit =
         sys.eventStream.publish(Mute(DeadLettersFilter(clazz)(occurrences = Int.MaxValue)))
       if (messageClasses.isEmpty) mute(classOf[AnyRef])
-      else messageClasses foreach mute
+      else messageClasses.foreach(mute)
     }
 
   // for ScalaTest === compare of Class objects
