@@ -63,7 +63,8 @@ jobs:
         run: |-
           cp .jvmopts-ci .jvmopts
           sbt ++2.12 compile Test/compile
- 
+          
+  test-diagnostics:
     name: Run tests
     runs-on: ubuntu-22.04
     if: github.repository == 'akka/akka-diagnostics'
