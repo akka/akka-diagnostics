@@ -7,7 +7,6 @@ addSbtPlugin("com.lightbend.akka" % "sbt-paradox-akka" % "0.45")
 addSbtPlugin("com.typesafe.sbt" % "sbt-site" % "1.4.1")
 addSbtPlugin("com.lightbend.sbt" % "sbt-publish-rsync" % "0.2")
 
-addSbtPlugin("com.dwijnand" % "sbt-dynver" % "3.1.0")
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.1")
 addSbtPlugin("com.lightbend.sbt" % "sbt-java-formatter" % "0.7.0")
 // for releasing

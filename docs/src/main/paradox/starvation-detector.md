@@ -14,43 +14,21 @@ The Starvation Detector will periodically schedule a simple task to measure the 
 the dispatcher. If a threshold is exceeded, a warning is logged with stack traces that show what threads of the
 dispatcher are busy with.
 
-@@include[proprietary.md](includes/proprietary.md)
-
 ## Using the Starvation Detector
 
 To use the Starvation Detector feature a dependency on the *akka-diagnostics* artifact must be added.
 
-sbt
-: @@@vars
 ```
-// Add Lightbend Platform to your build as documented at https://developer.lightbend.com/docs/lightbend-platform/introduction/getting-started/subscription-and-credentials.html
-"com.lightbend.akka" %% "akka-diagnostics" % "$version$"
-```
-@@@
-
-Gradle
-:   @@@vars
-```
-// Add Lightbend Platform to your build as documented at https://developer.lightbend.com/docs/lightbend-platform/introduction/getting-started/subscription-and-credentials.html
-dependencies {
-  compile group: 'com.lightbend.akka', name: 'akka-diagnostics_$scala.binaryVersion$', version: '$version$'
+@@dependency [Maven,sbt,Gradle] {
+  group=com.lightbend.akka
+  artifact=akka-diagnostics_$scala.binary.version$
+  version=$project.version$
 }
-```
-@@@
 
-Maven
-: @@@vars
+This plugin depends on Akka $akka.version$ or later, and note that it is important that all `akka-*` 
+dependencies are in the same version, so it is recommended to depend on them explicitly to avoid problems 
+with transient dependencies causing an unlucky mix of versions.
 ```
-<!-- Add Lightbend Platform to your build as documented at https://developer.lightbend.com/docs/lightbend-platform/introduction/getting-started/subscription-and-credentials.html -->
-<dependency>
-  <groupId>com.lightbend.akka</groupId>
-  <artifactId>akka-diagnostics_$scala.binaryVersion$</artifactId>
-  <version>$version$</version>
-</dependency>
-```
-@@@
-
-@@include[includes/common.md](includes/common.md) { #find-credentials }
 
 When this dependency is included the Starvation Detector is automatically run when the *ActorSystem*
 is started.

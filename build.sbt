@@ -11,7 +11,7 @@ inThisBuild(
       ScmInfo(
         url("https://github.com/akka/akka-diagnostics"),
         "https://github.com/akka/akka-diagnostics.git")),
-    startYear := Some(2021),
+    startYear := Some(2022),
     developers += Developer(
       "contributors",
       "Contributors",
@@ -20,7 +20,7 @@ inThisBuild(
     licenses := Seq(
       ("BUSL-1.1", url("https://raw.githubusercontent.com/akka/akka-diagnostics/main/LICENSE"))
     ), // FIXME change s/main/v1.1.0/ before releasing 1.1.0
-    description := "An Akka Persistence backed by SQL database with R2DBC",
+    description := "Akka diagnostics tools and utilities",
     // add snapshot repo when Akka version overriden
     resolvers ++=
       (if (System.getProperty("override.akka.version") != null)
@@ -28,16 +28,22 @@ inThisBuild(
       else Seq.empty)))
 
 lazy val root = (project in file("."))
-  .settings(name := "akka-diagnostics-root")
+  .settings(
+    name := "akka-diagnostics-root",
+    publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo"))))
+  .enablePlugins(ScalaUnidocPlugin)
+  .disablePlugins(SitePlugin, MimaPlugin)
   .settings(dontPublish)
   .aggregate(`akka-diagnostics`, docs)
 
-lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
+lazy val `akka-diagnostics` = (project in file("akka-diagnostics"))
+  .settings(common)
   .settings(libraryDependencies ++= Dependencies.akkaDiagnostics)
 
 
-lazy val docs = akkaAddonsModule("docs")
+lazy val docs = (project in file("docs"))
   .enablePlugins(AkkaParadoxPlugin, ParadoxSitePlugin, PreprocessPlugin, PublishRsyncPlugin)
+  .settings(common)
   .settings(dontPublish)
   .settings(
     name := "Akka Diagnostics",
@@ -69,14 +75,10 @@ lazy val docs = akkaAddonsModule("docs")
     publishRsyncArtifacts += makeSite.value -> "www/",
     publishRsyncHost := "akkarepo@gustav.akka.io")
 
-def akkaAddonsModule(name: String): Project =
-  Project(id = name.replace("/", "-"), base = file(name))
-    .settings(defaultSettings)
-
 lazy val dontPublish = Seq(publish / skip := true, Compile / publishArtifact := false)
 
 // settings
-lazy val defaultSettings: Seq[Setting[_]] =
+lazy val common: Seq[Setting[_]] =
   Seq(
     crossScalaVersions := Seq(Dependencies.Scala213, Dependencies.Scala212),
     scalaVersion := Dependencies.Scala213,
@@ -96,8 +98,6 @@ lazy val defaultSettings: Seq[Setting[_]] =
     Test / fork := true, // some non-heap memory is leaking
     Test / javaOptions ++= {
       import scala.collection.JavaConverters._
-      // include all passed -Dakka. properties to the javaOptions for forked tests
-      // useful to switch DB dialects for example
       val akkaProperties = System.getProperties.stringPropertyNames.asScala.toList.collect {
         case key: String if key.startsWith("akka.") => "-D" + key + "=" + System.getProperty(key)
       }

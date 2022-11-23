@@ -1,4 +1,4 @@
-# Akka Enhancements
+# Akka Diagnostics
 
 The Akka Thread Starvation Detector is a diagnostic tool that monitors the dispatcher of an ActorSystem and will log a warning if the dispatcher becomes unresponsive.
 [Akka](https://akka.io), available as part of the
@@ -12,9 +12,6 @@ The Akka Thread Starvation Detector is a diagnostic tool that monitors the dispa
 
 @@@
 
-
-
 The API documentation can be found here: 
 
 * @extref:[Scaladoc](scaladoc:)
-* @extref:[Javadoc](javadoc:)
