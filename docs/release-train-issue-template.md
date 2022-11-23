@@ -1,7 +1,7 @@
 Release Akka Diagnostics $VERSION$
 
 <!--
-# Release Train Issue Template for Akka Persistence R2DBC
+# Release Train Issue Template for Akka Diagnostics 
 
 (Liberally copied and adopted from Scala itself https://github.com/scala/scala-dev/blob/b11cd2e4a4431de7867db6b39362bea8fa6650e7/notes/releases/template.md)
 
@@ -11,7 +11,7 @@ Variables to be expanded in this template:
 - $VERSION$=???
 
 Key links:
-  - akka/akka-diagnostics milestone: https://github.com/akka/akka-persistence/milestone/?
+  - akka/akka-diagnostics milestone: https://github.com/akka/akka-diagnostics/milestone/?
 -->
 
 ### Cutting the release
@@ -41,7 +41,7 @@ Key links:
          git status
          git add docs/akka-diagnostics/current docs/akka-diagnostics/$VERSION$
          git add api/akka-diagnostics/current api/akka-diagnostics/$VERSION$
-         git commit -m "Akka Persistence R2DBC $VERSION$"
+         git commit -m "Akka Diagnostics R2DBC $VERSION$"
          ```
 
 ### Announcements
@@ -61,5 +61,4 @@ For minor or major releases:
 
 - [ ] Update version for [Lightbend Supported Modules](https://developer.lightbend.com/docs/lightbend-platform/introduction/getting-help/build-dependencies.html) in [private project](https://github.com/lightbend/lightbend-technology-intro-doc/blob/master/docs/modules/getting-help/examples/build.sbt)
 - [ ] Update [akka-dependencies bom](https://github.com/lightbend/akka-dependencies)
-- [ ] Update [Akka Projection gRPC samples](https://github.com/akka/akka-projection/tree/main/samples/grpc)
 - Close this issue

@@ -3,7 +3,7 @@
  */
 package akka.diagnostics
 
-import akka.PoolTypeAccessor.AffinityPoolAccessor
+import akka.dispatch.affinity.AffinityPool
 import akka.actor.ActorSystem
 import akka.annotation.InternalApi
 import akka.dispatch.Dispatcher
@@ -311,10 +311,10 @@ object StarvationDetector {
           s"Failed to extract thread prefix, unsupported executor service type [${es.getClass.toString}], starvation will not be detected for this dispatcher.")
     }
     private def threadNamePrefix(es: ExecutorService): Option[String] = es match {
-      case ak: AkkaForkJoinPool     => Some(getAkkaFJPFactory(ak).name)
-      case tpe: ThreadPoolExecutor  => Some(getThreadPoolExecutorFactory(tpe).name)
-      case ap: AffinityPoolAccessor => Some(getAffinityPoolFactory(ap).name)
-      case _                        => None
+      case ak: AkkaForkJoinPool    => Some(getAkkaFJPFactory(ak).name)
+      case tpe: ThreadPoolExecutor => Some(getThreadPoolExecutorFactory(tpe).name)
+      case ap: AffinityPool        => Some(getAffinityPoolFactory(ap).name)
+      case _                       => None
     }
     private def isSleepingFJThread(trace: StackTrace): Boolean =
       trace.length >= 2 &&
@@ -461,9 +461,9 @@ object StarvationDetector {
     tpe => f.get(tpe).asInstanceOf[MonitorableThreadFactory]
   }
 
-  private lazy val getAffinityPoolFactory: AffinityPoolAccessor => MonitorableThreadFactory = {
+  private lazy val getAffinityPoolFactory: AffinityPool => MonitorableThreadFactory = {
     val threadFactoryField =
-      classOf[AffinityPoolAccessor].getDeclaredField("akka$dispatch$affinity$AffinityPool$$threadFactory")
+      classOf[AffinityPool].getDeclaredField("akka$dispatch$affinity$AffinityPool$$threadFactory")
     threadFactoryField.setAccessible(true)
 
     ap => threadFactoryField.get(ap).asInstanceOf[MonitorableThreadFactory]
