@@ -1,4 +1,3 @@
-
 GlobalScope / parallelExecution := false
 Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
 
@@ -8,9 +7,7 @@ inThisBuild(
     organizationName := "Lightbend Inc.",
     homepage := Some(url("https://doc.akka.io/docs/akka-diagnostics/current")),
     scmInfo := Some(
-      ScmInfo(
-        url("https://github.com/akka/akka-diagnostics"),
-        "https://github.com/akka/akka-diagnostics.git")),
+      ScmInfo(url("https://github.com/akka/akka-diagnostics"), "https://github.com/akka/akka-diagnostics.git")),
     startYear := Some(2022),
     developers += Developer(
       "contributors",
@@ -24,8 +21,8 @@ inThisBuild(
     // add snapshot repo when Akka version overriden
     resolvers ++=
       (if (System.getProperty("override.akka.version") != null)
-        Seq("Akka Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots/"))
-      else Seq.empty)))
+         Seq("Akka Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots/"))
+       else Seq.empty)))
 
 lazy val common: Seq[Setting[_]] =
   Seq(
@@ -53,15 +50,7 @@ lazy val common: Seq[Setting[_]] =
       "-Xms1G" :: "-Xmx1G" :: "-XX:MaxDirectMemorySize=256M" :: akkaProperties
     },
     projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
-    Global / excludeLintKeys += projectInfoVersion,
-    Global / excludeLintKeys += mimaReportSignatureProblems,
-    Global / excludeLintKeys += mimaPreviousArtifacts)
-//    mimaReportSignatureProblems := true,
-//    mimaPreviousArtifacts :=
-//      Set(
-//        organization.value %% moduleName.value % previousStableVersion.value
-//          .getOrElse(throw new Error("Unable to determine previous version")))) //FIXME to add
-
+    Global / excludeLintKeys += projectInfoVersion)
 
 lazy val root = (project in file("."))
   .settings(
@@ -69,20 +58,17 @@ lazy val root = (project in file("."))
     publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo"))))
   .settings(common)
   .enablePlugins(ScalaUnidocPlugin)
-  .disablePlugins(SitePlugin, MimaPlugin)
+  .disablePlugins(SitePlugin)
   .settings(dontPublish)
   .aggregate(`akka-diagnostics`, docs)
 
 lazy val `akka-diagnostics` = (project in file("akka-diagnostics"))
   .settings(common)
-  .disablePlugins(MimaPlugin)
   .settings(libraryDependencies ++= Dependencies.akkaDiagnostics)
-
 
 lazy val docs = (project in file("docs"))
   .enablePlugins(AkkaParadoxPlugin, ParadoxSitePlugin, PreprocessPlugin, PublishRsyncPlugin)
   .settings(common)
-  .disablePlugins(MimaPlugin)
   .settings(dontPublish)
   .settings(
     name := "Akka Diagnostics",
@@ -115,5 +101,3 @@ lazy val docs = (project in file("docs"))
     publishRsyncHost := "akkarepo@gustav.akka.io")
 
 lazy val dontPublish = Seq(publish / skip := true, Compile / publishArtifact := false)
-
-
