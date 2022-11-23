@@ -48,6 +48,4 @@ object Dependencies {
     httpCore % Test,
     httpTestKit % Test,
     akkaStreamTestKit % Test) ++ TestDeps.commonTestDeps ++ Seq(serializationJackson % Provided)
-
-  val testkit = Seq(TestDeps.scalaTest, TestDeps.junit, akkaTestkit)
 }

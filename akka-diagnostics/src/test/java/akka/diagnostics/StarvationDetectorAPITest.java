@@ -1,4 +1,4 @@
-package com.lightbend.akka.diagnostics;
+package akka.diagnostics;
 
 import scala.concurrent.duration.Duration;
 import scala.concurrent.duration.FiniteDuration;

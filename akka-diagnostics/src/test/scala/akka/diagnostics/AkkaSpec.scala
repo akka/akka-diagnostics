@@ -1,20 +1,24 @@
 /**
  * Copyright (C) 2009-2016 Lightbend Inc. <http://www.lightbend.com>
  */
-package akka.commercial.test
-
-import java.lang.reflect.Modifier
+package akka.diagnostics
 
 import akka.actor.ActorSystem
 import akka.dispatch.Dispatchers
-import akka.event.{ Logging, LoggingAdapter }
+import akka.event.Logging
+import akka.event.LoggingAdapter
 import akka.testkit.TestEvent.Mute
-import akka.testkit.{ DeadLettersFilter, TestKit }
-import com.typesafe.config.{ Config, ConfigFactory }
+import akka.testkit.DeadLettersFilter
+import akka.testkit.TestKit
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 import org.scalactic.CanEqual
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.{ BeforeAndAfterAll, Matchers, WordSpecLike }
+import org.scalatest.BeforeAndAfterAll
+import org.scalatest.Matchers
+import org.scalatest.WordSpecLike
 
+import java.lang.reflect.Modifier
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.language.postfixOps

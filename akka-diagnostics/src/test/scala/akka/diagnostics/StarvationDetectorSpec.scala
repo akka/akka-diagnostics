@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <http://www.lightbend.com>
  */
-package com.lightbend.akka.diagnostics
+package akka.diagnostics
 
 import java.io.File
 import java.io.FileOutputStream
@@ -11,8 +11,6 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
-
-import akka.commercial.test.AkkaSpec
 import akka.dispatch.ExecutionContexts
 import akka.testkit.EventFilter
 
@@ -22,7 +20,7 @@ import scala.concurrent.duration._
 import scala.util.Try
 import StarvationDetectorSpec._
 import akka.event.Logging
-import com.lightbend.akka.diagnostics.StarvationDetector.StarvationDetectorThread
+import akka.diagnostics.StarvationDetector.StarvationDetectorThread
 
 import scala.concurrent.ExecutionContext
 

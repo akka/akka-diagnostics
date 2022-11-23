@@ -34,11 +34,7 @@ lazy val root = (project in file("."))
 
 lazy val `akka-diagnostics` = akkaAddonsModule("akka-diagnostics")
   .settings(libraryDependencies ++= Dependencies.akkaDiagnostics)
-  .dependsOn(addonsTestkit % Test)
 
-// Internal testkit
-lazy val addonsTestkit = akkaAddonsModule("addons-testkit")
-  .settings(libraryDependencies ++= Dependencies.testkit)
 
 lazy val docs = akkaAddonsModule("docs")
   .enablePlugins(AkkaParadoxPlugin, ParadoxSitePlugin, PreprocessPlugin, PublishRsyncPlugin)

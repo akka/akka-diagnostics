@@ -1,21 +1,26 @@
 /*
  * Copyright (C) 2009-2017 Lightbend Inc. <http://www.lightbend.com>
  */
-package com.lightbend.akka.diagnostics
+package akka.diagnostics
 
-import java.util.concurrent.{ CountDownLatch, ExecutorService, ThreadLocalRandom, ThreadPoolExecutor, TimeUnit }
-import java.util.concurrent.locks.LockSupport
-import java.util.function.BooleanSupplier
-
+import akka.PoolTypeAccessor.AffinityPoolAccessor
 import akka.actor.ActorSystem
 import akka.annotation.InternalApi
+import akka.dispatch.Dispatcher
+import akka.dispatch.ExecutorServiceDelegate
 import akka.dispatch.ForkJoinExecutorConfigurator.AkkaForkJoinPool
-import akka.dispatch.affinity.PoolTypeAccessor.AffinityPoolAccessor
-import akka.dispatch.{ Dispatcher, ExecutorServiceDelegate, MonitorableThreadFactory }
+import akka.dispatch.MonitorableThreadFactory
 import akka.event.Logging
 import akka.event.LoggingAdapter
 import com.typesafe.config.Config
 
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.ThreadLocalRandom
+import java.util.concurrent.ThreadPoolExecutor
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.locks.LockSupport
+import java.util.function.BooleanSupplier
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration._

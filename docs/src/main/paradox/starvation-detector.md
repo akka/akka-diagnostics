@@ -83,7 +83,7 @@ about what could be the cause. Next warning will be shown in 10000 milliseconds.
 Thread states (total 2 thread):   2 TIMED_WAITING
 Top stacks:
   2 java.lang.Thread.sleep(Native Method)
-    com.lightbend.akka.diagnostics.StarvationDetectorSpec$$[...]runOne$1$1.apply$mcV$sp(StarvationDetectorSpec.scala:17)
+    StarvationDetectorSpec$$[...]runOne$1$1.apply$mcV$sp(StarvationDetectorSpec.scala:17)
     [...]
 ```
 
