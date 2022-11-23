@@ -27,10 +27,47 @@ inThisBuild(
         Seq("Akka Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots/"))
       else Seq.empty)))
 
+lazy val common: Seq[Setting[_]] =
+  Seq(
+    crossScalaVersions := Seq(Dependencies.Scala213, Dependencies.Scala212),
+    scalaVersion := Dependencies.Scala213,
+    crossVersion := CrossVersion.binary,
+    scalafmtOnCompile := true,
+    sonatypeProfileName := "com.lightbend",
+    // Setting javac options in common allows IntelliJ IDEA to import them automatically
+    Compile / javacOptions ++= Seq("-encoding", "UTF-8", "-source", "1.8", "-target", "1.8"),
+    headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>""")),
+    Test / logBuffered := false,
+    Test / parallelExecution := false,
+    // show full stack traces and test case durations
+    Test / testOptions += Tests.Argument("-oDF"),
+    // -v Log "test run started" / "test started" / "test run finished" events on log level "info" instead of "debug".
+    // -a Show stack traces and exception class name for AssertionErrors.
+    testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
+    Test / fork := true, // some non-heap memory is leaking
+    Test / javaOptions ++= {
+      import scala.collection.JavaConverters._
+      val akkaProperties = System.getProperties.stringPropertyNames.asScala.toList.collect {
+        case key: String if key.startsWith("akka.") => "-D" + key + "=" + System.getProperty(key)
+      }
+      "-Xms1G" :: "-Xmx1G" :: "-XX:MaxDirectMemorySize=256M" :: akkaProperties
+    },
+    projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
+    Global / excludeLintKeys += projectInfoVersion,
+    Global / excludeLintKeys += mimaReportSignatureProblems,
+    Global / excludeLintKeys += mimaPreviousArtifacts)
+//    mimaReportSignatureProblems := true,
+//    mimaPreviousArtifacts :=
+//      Set(
+//        organization.value %% moduleName.value % previousStableVersion.value
+//          .getOrElse(throw new Error("Unable to determine previous version")))) //FIXME to add
+
+
 lazy val root = (project in file("."))
   .settings(
     name := "akka-diagnostics-root",
     publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo"))))
+  .settings(common)
   .enablePlugins(ScalaUnidocPlugin)
   .disablePlugins(SitePlugin, MimaPlugin)
   .settings(dontPublish)
@@ -38,16 +75,18 @@ lazy val root = (project in file("."))
 
 lazy val `akka-diagnostics` = (project in file("akka-diagnostics"))
   .settings(common)
+  .disablePlugins(MimaPlugin)
   .settings(libraryDependencies ++= Dependencies.akkaDiagnostics)
 
 
 lazy val docs = (project in file("docs"))
   .enablePlugins(AkkaParadoxPlugin, ParadoxSitePlugin, PreprocessPlugin, PublishRsyncPlugin)
   .settings(common)
+  .disablePlugins(MimaPlugin)
   .settings(dontPublish)
   .settings(
     name := "Akka Diagnostics",
-//      makeSite := makeSite.dependsOn(LocalRootProject / ScalaUnidoc / doc).value,  //FIXME to  added
+    makeSite := makeSite.dependsOn(LocalRootProject / ScalaUnidoc / doc).value,
     Preprocess / siteSubdirName := s"api/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
     Preprocess / sourceDirectory := (LocalRootProject / ScalaUnidoc / unidoc / target).value,
     previewPath := (Paradox / siteSubdirName).value,
@@ -77,39 +116,4 @@ lazy val docs = (project in file("docs"))
 
 lazy val dontPublish = Seq(publish / skip := true, Compile / publishArtifact := false)
 
-// settings
-lazy val common: Seq[Setting[_]] =
-  Seq(
-    crossScalaVersions := Seq(Dependencies.Scala213, Dependencies.Scala212),
-    scalaVersion := Dependencies.Scala213,
-    crossVersion := CrossVersion.binary,
-    scalafmtOnCompile := true,
-    //sonatypeProfileName := "com.lightbend", //FIXME to  added
-    // Setting javac options in common allows IntelliJ IDEA to import them automatically
-    Compile / javacOptions ++= Seq("-encoding", "UTF-8", "-source", "1.8", "-target", "1.8"),
-    //headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>""")), //FIXME to  added
-    Test / logBuffered := false,
-    Test / parallelExecution := false,
-    // show full stack traces and test case durations
-    Test / testOptions += Tests.Argument("-oDF"),
-    // -v Log "test run started" / "test started" / "test run finished" events on log level "info" instead of "debug".
-    // -a Show stack traces and exception class name for AssertionErrors.
-    testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
-    Test / fork := true, // some non-heap memory is leaking
-    Test / javaOptions ++= {
-      import scala.collection.JavaConverters._
-      val akkaProperties = System.getProperties.stringPropertyNames.asScala.toList.collect {
-        case key: String if key.startsWith("akka.") => "-D" + key + "=" + System.getProperty(key)
-      }
-      "-Xms1G" :: "-Xmx1G" :: "-XX:MaxDirectMemorySize=256M" :: akkaProperties
-    },
-    projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
-    Global / excludeLintKeys += projectInfoVersion)
-//    Global / excludeLintKeys += mimaReportSignatureProblems,    //TODO to add
-//    Global / excludeLintKeys += mimaPreviousArtifacts,
-//    mimaReportSignatureProblems := true,
-//    mimaPreviousArtifacts :=
-//      Set(
-//        organization.value %% moduleName.value % previousStableVersion.value
-//          .getOrElse(throw new Error("Unable to determine previous version"))))
 

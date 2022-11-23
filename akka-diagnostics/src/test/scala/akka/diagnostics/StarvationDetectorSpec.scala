@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2009-2017 Lightbend Inc. <http://www.lightbend.com>
+ * Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package akka.diagnostics
 
 import java.io.File

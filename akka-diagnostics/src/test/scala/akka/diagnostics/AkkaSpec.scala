@@ -1,6 +1,7 @@
-/**
- * Copyright (C) 2009-2016 Lightbend Inc. <http://www.lightbend.com>
+/*
+ * Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package akka.diagnostics
 
 import akka.actor.ActorSystem
