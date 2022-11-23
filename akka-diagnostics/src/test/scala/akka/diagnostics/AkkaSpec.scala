@@ -97,8 +97,6 @@ abstract class AkkaSpec(_system: ActorSystem)
     with WordSpecLike
     with Matchers
     with BeforeAndAfterAll
-    // TODO not public API with WatchedByCoroner
-    // TODO deprecated: with ConversionCheckedTripleEquals
     with ScalaFutures {
 
   implicit val patience = PatienceConfig(testKitSettings.DefaultTimeout.duration)
