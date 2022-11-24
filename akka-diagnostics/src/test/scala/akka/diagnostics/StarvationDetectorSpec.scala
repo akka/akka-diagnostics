@@ -26,9 +26,9 @@ import akka.diagnostics.StarvationDetector.StarvationDetectorThread
 import scala.concurrent.ExecutionContext
 
 class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enabled = off
-      akka.diagnostics.starvation-detector.check-interval              = 100ms # check more often
+      akka.diagnostics.starvation-detector.check-interval              = 200ms # check more often
       akka.diagnostics.starvation-detector.initial-delay               = 0     # no initial delay
-      akka.diagnostics.starvation-detector.max-delay-warning-threshold = 10ms  # make check tighter
+      akka.diagnostics.starvation-detector.max-delay-warning-threshold = 30ms  # make check tighter
       akka.diagnostics.starvation-detector.warning-interval            = 10s   # must be longer than one antipattern test, so it is reported only once
       custom-fjp-dispatcher {
         type = Dispatcher
@@ -170,7 +170,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
       val tmp = File.createTempFile("bigfile", "txt")
       tmp.deleteOnExit()
 
-      val b = new Array[Byte](3000000) // may need tuning depending on how fast your disk is
+      val b = new Array[Byte](9000000) // may need tuning depending on how fast your disk is
       val fos = new FileOutputStream(tmp)
       try fos.write(b)
       finally {
