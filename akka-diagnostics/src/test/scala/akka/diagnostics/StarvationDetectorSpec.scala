@@ -117,12 +117,12 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
             }.flatMap(_ => runThunks(remaining - 1))
           else Future.successful(())
 
-        //EventFilter.warning(start = "Exceedingly long scheduling time on ExecutionContext", occurrences = 0).intercept {
-        val numIterations = 10000 // 10000 * 200 tasks, runs in 1.7 seconds on my machine on two threads
+        EventFilter.warning(start = "Exceedingly long scheduling time on ExecutionContext", occurrences = 0).intercept {
+          val numIterations = 10000 // 10000 * 200 tasks, runs in 1.7 seconds on my machine on two threads
 
-        val result = Future.sequence((1 to 200).map(_ => runThunks(numIterations)))
-        Await.result(result, 10.seconds)
-        //}
+          val result = Future.sequence((1 to 200).map(_ => runThunks(numIterations)))
+          Await.result(result, 10.seconds)
+        }
       }
     }
 
