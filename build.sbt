@@ -1,3 +1,5 @@
+import akka.AutomaticModuleName
+
 GlobalScope / parallelExecution := false
 Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
 
@@ -65,6 +67,7 @@ lazy val root = (project in file("."))
 lazy val `akka-diagnostics` = (project in file("akka-diagnostics"))
   .settings(common)
   .settings(libraryDependencies ++= Dependencies.akkaDiagnostics)
+  .settings(AutomaticModuleName.settings("akka.diagnostics"))
 
 lazy val docs = (project in file("docs"))
   .enablePlugins(AkkaParadoxPlugin, ParadoxSitePlugin, PreprocessPlugin, PublishRsyncPlugin)
