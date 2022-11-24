@@ -65,40 +65,49 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
           () => system.whenTerminated.isCompleted)
       }
       "log a warning if the dispatcher is busy for long periods of time" should {
-        AntiPatterns.foreach { case AntiPattern(name, expected, block) =>
-          name in {
-            def runOne(i: Int, remaining: Int): Future[Unit] =
-              if (remaining > 0)
-                Future {
-                  Try(block()) // not interested in the error, just showing the anti-pattern
-                  ()
-                }.flatMap(_ => runOne(i, remaining - 1))
-              else Future.successful(())
+        // Excluding CompletableFuture.get when running with FJP because it creates new threads (without bounds)
+        // for that blocking operation. CompletableFuture.get is still an anti-pattern, but not something the
+        // TSD can find. Tried to set lower bounds with system property
+        // `java.util.concurrent.ForkJoinPool.common.maximumSpares` but that didn't help
 
-            resetWarningInterval()
+        AntiPatterns
+          .filterNot(p =>
+            p.name == "CompletableFuture.get" && (dispatcherId == DefaultDispatcherId || dispatcherId.contains("fjp")))
+          .foreach { case AntiPattern(name, expected, block) =>
+            name in {
+              def runOne(i: Int, remaining: Int): Future[Unit] =
+                if (remaining > 0)
+                  Future {
+                    Try(block()) // not interested in the error, just showing the anti-pattern
+                    ()
+                  }.flatMap(_ => runOne(i, remaining - 1))
+                else Future.successful(())
 
-            val pattern = s"(?s)Exceedingly long scheduling time on ExecutionContext.*\\Q$expected\\E.*".r
-            EventFilter
-              .custom(
-                { case Logging.Warning(_, _, message: String) =>
-                  if (pattern.findFirstIn(message).isEmpty) {
-                    println(s"Unexpected warning: \n$message")
-                    false
-                  } else if (message.contains("total 0 thread")) {
-                    println(s"Detector logged warning but it does not contain any thread stacks:\n$message")
-                    false
-                  } else true
+              resetWarningInterval()
 
-                },
-                occurrences = 1)
-              .intercept {
-                val numIterations = 2 // 5 * numThreads  iterations * 2 tasks * 100ms / numThreads = 2 seconds run time
+              val pattern = s"(?s)Exceedingly long scheduling time on ExecutionContext.*\\Q$expected\\E.*".r
+              EventFilter
+                .custom(
+                  { case Logging.Warning(_, _, message: String) =>
+                    if (pattern.findFirstIn(message).isEmpty) {
+                      println(s"Unexpected warning: \n$message")
+                      false
+                    } else if (message.contains("total 0 thread")) {
+                      println(s"Detector logged warning but it does not contain any thread stacks:\n$message")
+                      false
+                    } else true
 
-                val result = Future.traverse(1 to (numThreads * 5))(runOne(_, numIterations))
-                Await.result(result, 10.seconds)
-              }
+                  },
+                  occurrences = 1)
+                .intercept {
+                  val numIterations =
+                    2 // 5 * numThreads  iterations * 2 tasks * 100ms / numThreads = 2 seconds run time
+
+                  val result = Future.traverse(1 to (numThreads * 5))(runOne(_, numIterations))
+                  Await.result(result, 10.seconds)
+                }
+            }
           }
-        }
       }
       "not log a warning if the dispatcher is busy for an amount of small non-blocking tasks" in {
         def runThunks(remaining: Int)(implicit ec: ExecutionContext): Future[Unit] =
