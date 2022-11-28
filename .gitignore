@@ -18,6 +18,7 @@ project/project/
 .project
 .sbtserver
 .sbtserver.lock
+.bsp
 .cache*
 target
 

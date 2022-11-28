@@ -26,9 +26,9 @@ import akka.diagnostics.StarvationDetector.StarvationDetectorThread
 import scala.concurrent.ExecutionContext
 
 class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enabled = off
-      akka.diagnostics.starvation-detector.check-interval              = 100ms # check more often
+      akka.diagnostics.starvation-detector.check-interval              = 200ms # check more often
       akka.diagnostics.starvation-detector.initial-delay               = 0     # no initial delay
-      akka.diagnostics.starvation-detector.max-delay-warning-threshold = 10ms  # make check tighter
+      akka.diagnostics.starvation-detector.max-delay-warning-threshold = 30ms  # make check tighter
       akka.diagnostics.starvation-detector.warning-interval            = 10s   # must be longer than one antipattern test, so it is reported only once
       custom-fjp-dispatcher {
         type = Dispatcher
@@ -65,40 +65,49 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
           () => system.whenTerminated.isCompleted)
       }
       "log a warning if the dispatcher is busy for long periods of time" should {
-        AntiPatterns.foreach { case AntiPattern(name, expected, block) =>
-          name in {
-            def runOne(i: Int, remaining: Int): Future[Unit] =
-              if (remaining > 0)
-                Future {
-                  Try(block()) // not interested in the error, just showing the anti-pattern
-                  ()
-                }.flatMap(_ => runOne(i, remaining - 1))
-              else Future.successful(())
+        // Excluding CompletableFuture.get when running with FJP because it creates new threads (without bounds)
+        // for that blocking operation. CompletableFuture.get is still an anti-pattern, but not something the
+        // TSD can find. Tried to set lower bounds with system property
+        // `java.util.concurrent.ForkJoinPool.common.maximumSpares` but that didn't help
 
-            resetWarningInterval()
+        AntiPatterns
+          .filterNot(p =>
+            p.name == "CompletableFuture.get" && (dispatcherId == DefaultDispatcherId || dispatcherId.contains("fjp")))
+          .foreach { case AntiPattern(name, expected, block) =>
+            name in {
+              def runOne(i: Int, remaining: Int): Future[Unit] =
+                if (remaining > 0)
+                  Future {
+                    Try(block()) // not interested in the error, just showing the anti-pattern
+                    ()
+                  }.flatMap(_ => runOne(i, remaining - 1))
+                else Future.successful(())
 
-            val pattern = s"(?s)Exceedingly long scheduling time on ExecutionContext.*\\Q$expected\\E.*".r
-            EventFilter
-              .custom(
-                { case Logging.Warning(_, _, message: String) =>
-                  if (pattern.findFirstIn(message).isEmpty) {
-                    println(s"Unexpected warning: \n$message")
-                    false
-                  } else if (message.contains("total 0 thread")) {
-                    println(s"Detector logged warning but it does not contain any thread stacks:\n$message")
-                    false
-                  } else true
+              resetWarningInterval()
 
-                },
-                occurrences = 1)
-              .intercept {
-                val numIterations = 2 // 5 * numThreads  iterations * 2 tasks * 100ms / numThreads = 2 seconds run time
+              val pattern = s"(?s)Exceedingly long scheduling time on ExecutionContext.*\\Q$expected\\E.*".r
+              EventFilter
+                .custom(
+                  { case Logging.Warning(_, _, message: String) =>
+                    if (pattern.findFirstIn(message).isEmpty) {
+                      println(s"Unexpected warning: \n$message")
+                      false
+                    } else if (message.contains("total 0 thread")) {
+                      println(s"Detector logged warning but it does not contain any thread stacks:\n$message")
+                      false
+                    } else true
 
-                val result = Future.traverse(1 to (numThreads * 5))(runOne(_, numIterations))
-                Await.result(result, 10.seconds)
-              }
+                  },
+                  occurrences = 1)
+                .intercept {
+                  val numIterations =
+                    2 // 5 * numThreads  iterations * 2 tasks * 100ms / numThreads = 2 seconds run time
+
+                  val result = Future.traverse(1 to (numThreads * 5))(runOne(_, numIterations))
+                  Await.result(result, 10.seconds)
+                }
+            }
           }
-        }
       }
       "not log a warning if the dispatcher is busy for an amount of small non-blocking tasks" in {
         def runThunks(remaining: Int)(implicit ec: ExecutionContext): Future[Unit] =
@@ -108,12 +117,12 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
             }.flatMap(_ => runThunks(remaining - 1))
           else Future.successful(())
 
-        //EventFilter.warning(start = "Exceedingly long scheduling time on ExecutionContext", occurrences = 0).intercept {
-        val numIterations = 10000 // 10000 * 200 tasks, runs in 1.7 seconds on my machine on two threads
+        EventFilter.warning(start = "Exceedingly long scheduling time on ExecutionContext", occurrences = 0).intercept {
+          val numIterations = 10000 // 10000 * 200 tasks, runs in 1.7 seconds on my machine on two threads
 
-        val result = Future.sequence((1 to 200).map(_ => runThunks(numIterations)))
-        Await.result(result, 10.seconds)
-        //}
+          val result = Future.sequence((1 to 200).map(_ => runThunks(numIterations)))
+          Await.result(result, 10.seconds)
+        }
       }
     }
 
@@ -161,7 +170,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
       val tmp = File.createTempFile("bigfile", "txt")
       tmp.deleteOnExit()
 
-      val b = new Array[Byte](3000000) // may need tuning depending on how fast your disk is
+      val b = new Array[Byte](9000000) // may need tuning depending on how fast your disk is
       val fos = new FileOutputStream(tmp)
       try fos.write(b)
       finally {
