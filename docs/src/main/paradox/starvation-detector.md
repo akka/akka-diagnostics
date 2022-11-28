@@ -14,11 +14,14 @@ The Starvation Detector will periodically schedule a simple task to measure the 
 the dispatcher. If a threshold is exceeded, a warning is logged with stack traces that show what threads of the
 dispatcher are busy with.
 
+## Project Info
+
+@@project-info{ projectId="akka-diagnostics" }
+
 ## Using the Starvation Detector
 
 To use the Starvation Detector feature a dependency on the *akka-diagnostics* artifact must be added.
 
-```
 @@dependency [Maven,sbt,Gradle] {
   group=com.lightbend.akka
   artifact=akka-diagnostics_$scala.binary.version$
@@ -28,7 +31,6 @@ To use the Starvation Detector feature a dependency on the *akka-diagnostics* ar
 This plugin depends on Akka $akka.version$ or later, and note that it is important that all `akka-*` 
 dependencies are in the same version, so it is recommended to depend on them explicitly to avoid problems 
 with transient dependencies causing an unlucky mix of versions.
-```
 
 When this dependency is included the Starvation Detector is automatically run when the *ActorSystem*
 is started.
