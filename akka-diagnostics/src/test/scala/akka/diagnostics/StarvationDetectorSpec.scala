@@ -20,6 +20,7 @@ import scala.concurrent.duration._
 import scala.util.Try
 
 import akka.diagnostics.StarvationDetector.StarvationDetectorThread
+import akka.dispatch.Dispatchers
 import akka.dispatch.ExecutionContexts
 import akka.event.Logging
 import akka.testkit.EventFilter
@@ -57,7 +58,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
     def testsExecutor(dispatcherId: String): Unit = s"support $dispatcherId" should {
       implicit val dispatcher: ExecutionContext = system.dispatchers.lookup(dispatcherId)
       // default dispatcher is already checked out of the box
-      if (dispatcherId != DefaultDispatcherId) {
+      if (dispatcherId != DefaultDispatcherId && dispatcherId != InternalDispatcherId) {
         StarvationDetector.checkExecutionContext(
           dispatcher,
           system.log,
@@ -73,7 +74,8 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
 
         AntiPatterns
           .filterNot(p =>
-            p.name == "CompletableFuture.get" && (dispatcherId == DefaultDispatcherId || dispatcherId.contains("fjp")))
+            p.name == "CompletableFuture.get" && (dispatcherId == DefaultDispatcherId || dispatcherId == InternalDispatcherId || dispatcherId
+              .contains("fjp")))
           .foreach { case AntiPattern(name, expected, block) =>
             name in {
               def runOne(i: Int, remaining: Int): Future[Unit] =
@@ -128,6 +130,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
     }
 
     testsExecutor(DefaultDispatcherId)
+    testsExecutor(InternalDispatcherId)
     testsExecutor("custom-fjp-dispatcher")
     testsExecutor("custom-threadpool-dispatcher")
     testsExecutor("custom-affinity-dispatcher")
@@ -190,6 +193,6 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
 }
 object StarvationDetectorSpec {
   val numThreads = 8
-  // Dispacher.DefaultDispatcherId constant only available in 2.6
-  val DefaultDispatcherId = "akka.actor.default-dispatcher"
+  val DefaultDispatcherId = Dispatchers.DefaultDispatcherId
+  val InternalDispatcherId = "akka.actor.internal-dispatcher"
 }

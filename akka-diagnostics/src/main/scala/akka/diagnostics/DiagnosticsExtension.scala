@@ -19,5 +19,6 @@ object DiagnosticsExtension extends ExtensionId[DiagnosticsImpl] with ExtensionI
 
 class DiagnosticsImpl(system: ExtendedActorSystem) extends Extension {
   StarvationDetector.checkSystemDispatcher(system)
+  StarvationDetector.checkInternalDispatcher(system)
   ConfigChecker.reportIssues(system)
 }
