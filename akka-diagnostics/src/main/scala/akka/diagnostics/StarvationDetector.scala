@@ -4,17 +4,7 @@
 
 package akka.diagnostics
 
-import akka.dispatch.affinity.AffinityPool
-import akka.actor.ActorSystem
-import akka.annotation.InternalApi
-import akka.dispatch.Dispatcher
-import akka.dispatch.ExecutorServiceDelegate
-import akka.dispatch.ForkJoinExecutorConfigurator.AkkaForkJoinPool
-import akka.dispatch.MonitorableThreadFactory
-import akka.event.Logging
-import akka.event.LoggingAdapter
-import com.typesafe.config.Config
-
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadLocalRandom
@@ -22,6 +12,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
 import java.util.function.BooleanSupplier
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration._
@@ -30,6 +21,17 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
+
+import akka.actor.ActorSystem
+import akka.annotation.InternalApi
+import akka.dispatch.Dispatcher
+import akka.dispatch.ExecutorServiceDelegate
+import akka.dispatch.ForkJoinExecutorConfigurator.AkkaForkJoinPool
+import akka.dispatch.MonitorableThreadFactory
+import akka.dispatch.affinity.AffinityPool
+import akka.event.Logging
+import akka.event.LoggingAdapter
+import com.typesafe.config.Config
 
 abstract class StarvationDetectorSettings { _: StarvationDetectorSettings.StarvationDetectorSettingsImpl =>
   def checkInterval: FiniteDuration
@@ -122,6 +124,9 @@ object StarvationDetectorSettings {
 
 object StarvationDetector {
 
+  // only using the key of this Map, but need ConcurrentHashMap for `computeIfAbsent`
+  private val starvationMonitoredContexts = new ConcurrentHashMap[ExecutionContext, StarvationDetectorThread]()
+
   final case class UnsupportedDispatcherException(msg: String) extends RuntimeException(msg) with NoStackTrace
 
   /**
@@ -145,11 +150,38 @@ object StarvationDetector {
       () => system.whenTerminated.isCompleted)
 
   /**
+   * Creates and runs a StarvationDetector thread for the internal dispatcher of the system. Akka 2.6 introduced this
+   * dispatcher for internal tasks like clustering. If there is no internal dispatcher, does nothing.
+   */
+  def checkInternalDispatcher(system: ActorSystem): Unit =
+    checkInternalDispatcher(
+      system,
+      StarvationDetectorSettings.fromConfig(system.settings.config.getConfig("akka.diagnostics.starvation-detector")))
+
+  /**
+   * Creates and runs a StarvationDetector thread for the internal dispatcher of the system with custom configuration.
+   * Akka 2.6 introduced this dispatcher for internal tasks like clustering. If there is no internal dispatcher, does
+   * nothing.
+   */
+  def checkInternalDispatcher(system: ActorSystem, config: StarvationDetectorSettings): Unit = {
+    val internalDispatcherPath = "akka.actor.internal-dispatcher"
+    val dispatcher = system.dispatchers.lookup(internalDispatcherPath)
+    checkExecutionContext(
+      dispatcher,
+      Logging(system, classOf[StarvationDetectorThread]),
+      config,
+      () => system.whenTerminated.isCompleted)
+  }
+
+  /**
    * Creates and runs a StarvationDetector thread for the given ExecutionContext. Thread analytics are currently only
    * available for Akka dispatchers.
    *
    * You need to provide a `hasTerminated` function that will be used to figure out if the execution context has shut
    * down to shutdown the starvation detector thread.
+   *
+   * Note that an ExecutionContext will only have one StarvationDetector for it active at a time. If there is another
+   * StarvationDetector running, this method does nothing.
    */
   def checkExecutionContext(
       ec: ExecutionContext,
@@ -157,9 +189,14 @@ object StarvationDetector {
       config: StarvationDetectorSettings,
       hasTerminated: () => Boolean): Unit =
     if (config.isEnabled) {
-      val thread = new StarvationDetectorThread(ec, log, config, hasTerminated)
-      thread.setDaemon(true)
-      thread.start()
+      starvationMonitoredContexts.computeIfAbsent(
+        ec,
+        _ => {
+          val thread = new StarvationDetectorThread(ec, log, config, hasTerminated)
+          thread.setDaemon(true)
+          thread.start()
+          thread
+        })
     }
 
   /**
@@ -279,6 +316,7 @@ object StarvationDetector {
         }
       } finally {
         log.info(s"Starvation detector stopping for dispatcher [$ec]")
+        starvationMonitoredContexts.remove(ec)
       }
 
     case class ThreadStatus(thread: Thread, state: Thread.State, stackTrace: StackTrace) {

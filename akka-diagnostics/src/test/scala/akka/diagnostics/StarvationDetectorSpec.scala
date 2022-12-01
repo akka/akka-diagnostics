@@ -12,18 +12,20 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
+
 import akka.dispatch.ExecutionContexts
 import akka.testkit.EventFilter
-
 import scala.concurrent.Await
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Try
+
 import StarvationDetectorSpec._
 import akka.event.Logging
 import akka.diagnostics.StarvationDetector.StarvationDetectorThread
-
 import scala.concurrent.ExecutionContext
+
+import akka.dispatch.Dispatchers
 
 class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enabled = off
       akka.diagnostics.starvation-detector.check-interval              = 200ms # check more often
@@ -56,7 +58,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
     def testsExecutor(dispatcherId: String): Unit = s"support $dispatcherId" should {
       implicit val dispatcher = system.dispatchers.lookup(dispatcherId)
       // default dispatcher is already checked out of the box
-      if (dispatcherId != DefaultDispatcherId) {
+      if (dispatcherId != DefaultDispatcherId && dispatcherId != InternalDispatcherId) {
         StarvationDetector.checkExecutionContext(
           dispatcher,
           system.log,
@@ -72,7 +74,8 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
 
         AntiPatterns
           .filterNot(p =>
-            p.name == "CompletableFuture.get" && (dispatcherId == DefaultDispatcherId || dispatcherId.contains("fjp")))
+            p.name == "CompletableFuture.get" && (dispatcherId == DefaultDispatcherId || dispatcherId == InternalDispatcherId || dispatcherId
+              .contains("fjp")))
           .foreach { case AntiPattern(name, expected, block) =>
             name in {
               def runOne(i: Int, remaining: Int): Future[Unit] =
@@ -127,6 +130,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
     }
 
     testsExecutor(DefaultDispatcherId)
+    testsExecutor(InternalDispatcherId)
     testsExecutor("custom-fjp-dispatcher")
     testsExecutor("custom-threadpool-dispatcher")
     testsExecutor("custom-affinity-dispatcher")
@@ -188,6 +192,6 @@ class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enab
 }
 object StarvationDetectorSpec {
   val numThreads = 8
-  // Dispacher.DefaultDispatcherId constant only available in 2.6
-  val DefaultDispatcherId = "akka.actor.default-dispatcher"
+  val DefaultDispatcherId = Dispatchers.DefaultDispatcherId
+  val InternalDispatcherId = "akka.actor.internal-dispatcher"
 }
