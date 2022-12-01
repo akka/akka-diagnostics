@@ -129,7 +129,8 @@ object StarvationDetectorSettings {
 
 object StarvationDetector {
 
-  private val starvationMonitoredContexts = ConcurrentHashMap.newKeySet[ExecutionContext]()
+  // only using the key of this Map, but need ConcurrentHashMap for `computeIfAbsent`
+  private val starvationMonitoredContexts = new ConcurrentHashMap[ExecutionContext, StarvationDetectorThread]()
 
   final case class UnsupportedDispatcherException(msg: String) extends RuntimeException(msg) with NoStackTrace
 
@@ -197,10 +198,15 @@ object StarvationDetector {
       log: LoggingAdapter,
       config: StarvationDetectorSettings,
       hasTerminated: () => Boolean): Unit =
-    if (config.isEnabled && !starvationMonitoredContexts.contains(ec)) {
-      val thread = new StarvationDetectorThread(ec, log, config, hasTerminated)
-      thread.setDaemon(true)
-      thread.start()
+    if (config.isEnabled) {
+      starvationMonitoredContexts.computeIfAbsent(
+        ec,
+        _ => {
+          val thread = new StarvationDetectorThread(ec, log, config, hasTerminated)
+          thread.setDaemon(true)
+          thread.start()
+          thread
+        })
     }
 
   /**
@@ -239,8 +245,6 @@ object StarvationDetector {
     val checkIntervalNanos = checkInterval.toNanos
     @volatile // to allow overriding in tests
     var nextWarningAfterNanos = 0L
-
-    starvationMonitoredContexts.add(ec)
 
     class Check(onFinish: () => Unit) extends Runnable {
       def run(): Unit = onFinish()
