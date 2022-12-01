@@ -5,17 +5,6 @@
 package akka.diagnostics
 
 import java.util.concurrent.ConcurrentHashMap
-
-import akka.dispatch.affinity.AffinityPool
-import akka.actor.ActorSystem
-import akka.annotation.InternalApi
-import akka.dispatch.Dispatcher
-import akka.dispatch.ExecutorServiceDelegate
-import akka.dispatch.ForkJoinExecutorConfigurator.AkkaForkJoinPool
-import akka.dispatch.MonitorableThreadFactory
-import akka.event.Logging
-import akka.event.LoggingAdapter
-import com.typesafe.config.Config
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadLocalRandom
@@ -32,6 +21,17 @@ import scala.util.Success
 import scala.util.Try
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
+
+import akka.actor.ActorSystem
+import akka.annotation.InternalApi
+import akka.dispatch.Dispatcher
+import akka.dispatch.ExecutorServiceDelegate
+import akka.dispatch.ForkJoinExecutorConfigurator.AkkaForkJoinPool
+import akka.dispatch.MonitorableThreadFactory
+import akka.dispatch.affinity.AffinityPool
+import akka.event.Logging
+import akka.event.LoggingAdapter
+import com.typesafe.config.Config
 
 abstract class StarvationDetectorSettings { _: StarvationDetectorSettings.StarvationDetectorSettingsImpl =>
   def checkInterval: FiniteDuration
@@ -124,7 +124,8 @@ object StarvationDetectorSettings {
 
 object StarvationDetector {
 
-  private val starvationMonitoredContexts = ConcurrentHashMap.newKeySet[ExecutionContext]()
+  // only using the key of this Map, but need ConcurrentHashMap for `computeIfAbsent`
+  private val starvationMonitoredContexts = new ConcurrentHashMap[ExecutionContext, StarvationDetectorThread]()
 
   final case class UnsupportedDispatcherException(msg: String) extends RuntimeException(msg) with NoStackTrace
 
@@ -187,10 +188,15 @@ object StarvationDetector {
       log: LoggingAdapter,
       config: StarvationDetectorSettings,
       hasTerminated: () => Boolean): Unit =
-    if (config.isEnabled && !starvationMonitoredContexts.contains(ec)) {
-      val thread = new StarvationDetectorThread(ec, log, config, hasTerminated)
-      thread.setDaemon(true)
-      thread.start()
+    if (config.isEnabled) {
+      starvationMonitoredContexts.computeIfAbsent(
+        ec,
+        _ => {
+          val thread = new StarvationDetectorThread(ec, log, config, hasTerminated)
+          thread.setDaemon(true)
+          thread.start()
+          thread
+        })
     }
 
   /**
@@ -229,8 +235,6 @@ object StarvationDetector {
     val checkIntervalNanos = checkInterval.toNanos
     @volatile // to allow overriding in tests
     var nextWarningAfterNanos = 0L
-
-    starvationMonitoredContexts.add(ec)
 
     class Check(onFinish: () => Unit) extends Runnable {
       def run(): Unit = onFinish()
