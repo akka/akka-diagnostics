@@ -20,6 +20,8 @@ object Dependencies {
     val httpSprayJson = "com.typesafe.akka" %% "akka-http-spray-json" % AkkaHttpVersion
     val httpTestKit = "com.typesafe.akka" %% "akka-http-testkit" % AkkaHttpVersion
     val management = "com.lightbend.akka.management" %% "akka-management" % AkkaManagementVersion
+    val akkaRemoting = "com.typesafe.akka" %% "akka-remote" % AkkaVersion
+    val akkaClusterMetrics = "com.typesafe.akka" %% "akka-cluster-metrics" % AkkaVersion
     val akkaStreamTestKit = "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion
     val serializationJackson = "com.typesafe.akka" %% "akka-serialization-jackson" % AkkaVersion
   }
@@ -29,7 +31,7 @@ object Dependencies {
     val junit = "junit" % "junit" % "4.12" // Common Public License 1.0
     val all = Seq(
       scalaTest % Test, // ApacheV2
-      junit % Test // Common Public License 1.0
+      junit % Test, // Common Public License 1.0
     )
   }
 
@@ -37,6 +39,8 @@ object Dependencies {
 
   val akkaDiagnostics = Seq(
     commonsLang, // for levenshtein distance impl
+    akkaRemoting,
+    akkaClusterMetrics,
     management % Provided,
     httpSprayJson % Provided,
     http % Test, // just needed to tie the versions down, management pulls newer version in
