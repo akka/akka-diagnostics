@@ -16,8 +16,8 @@ import scala.annotation.nowarn
 
 object ConfigCheckerSpec {
   val conf = ConfigFactory.parseString("""
-      akka.diagnostics.recorder.enabled = off
-      """)
+      akka.diagnostics.checker.enabled = on
+      """) // FIXME unnecessary
 }
 
 class ConfigCheckerSpec extends AkkaSpec(ConfigCheckerSpec.conf) {
@@ -749,7 +749,7 @@ class ConfigCheckerSpec extends AkkaSpec(ConfigCheckerSpec.conf) {
         s"""
           akka.cluster.auto-down-unreachable-after = 10s
           akka.cluster.split-brain-resolver.active-strategy = keep-majority
-          akka.diagnostics.checker.disabled-checks = "[auto-down, typo]" "}
+          akka.diagnostics.checker.disabled-checks = [auto-down, typo]
           """)
 
       val configs = configStrings.map(c =>
@@ -797,13 +797,12 @@ class ConfigCheckerSpec extends AkkaSpec(ConfigCheckerSpec.conf) {
     "log warning when ActorSystem startup" in {
       val c = ConfigFactory
         .parseString("""
-          akka.log-level = INFO # typo
+          akka.log-level = INFO # typo, it should be akka.loglevel
           akka.diagnostics.checker.async-check-after = 200ms
         """)
         .withFallback(system.settings.config)
-
       val logSource = classOf[ConfigChecker].getName
-      // the logging is performed async after 200ms, and therfore we can intercept the log like this
+      // the logging is performed async after 200ms, and therefore we can intercept the log like this
       val sys2 = ActorSystem(system.name + "-2", c)
       try {
         EventFilter.warning(start = "Lightbend recommendation", source = logSource, occurrences = 1).intercept {}(sys2)

@@ -7,12 +7,12 @@ package akka.diagnostics
 import java.net.InetAddress
 import java.util.Locale
 import java.util.concurrent.TimeUnit.MILLISECONDS
-
 import akka.actor.{ ActorSystem, ExtendedActorSystem }
 import akka.dispatch.ThreadPoolConfig
 import akka.event.Logging
 import com.typesafe.config._
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable
@@ -85,8 +85,8 @@ object ConfigChecker {
     def logWarnings(result: ValidationResults): Unit =
       if (result.warnings.nonEmpty) {
         val formatted = result.warnings.map(w => lightbendRecommendation(format(w)))
-        val log = Logging.getLogger(system, classOf[ConfigChecker].getName)
-        formatted.foreach(log.warning)
+        val log = LoggerFactory.getLogger(classOf[ConfigChecker].getName)
+        formatted.foreach(log.warn)
       }
 
     mode(system.settings.config) match {
