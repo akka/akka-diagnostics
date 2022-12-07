@@ -31,7 +31,7 @@ object Dependencies {
     val junit = "junit" % "junit" % "4.13.2" // Common Public License 1.0
     val all = Seq(
       scalaTest % Test, // ApacheV2
-      junit % Test, // Common Public License 1.0
+      junit % Test // Common Public License 1.0
     )
   }
 
