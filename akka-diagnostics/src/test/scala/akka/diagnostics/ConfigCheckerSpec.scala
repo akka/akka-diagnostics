@@ -4,15 +4,17 @@
 
 package akka.diagnostics
 
+import akka.actor.ActorSystem
+import akka.actor.ExtendedActorSystem
+import akka.diagnostics.ConfigChecker.ConfigWarning
+import akka.testkit.EventFilter
+import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
+
+import scala.annotation.nowarn
 import scala.collection.JavaConverters._
 import scala.collection.immutable
 import scala.util.Try
-import com.typesafe.config.{ Config, ConfigFactory }
-import akka.actor.{ ActorSystem, ExtendedActorSystem }
-import akka.testkit.EventFilter
-import akka.diagnostics.ConfigChecker.ConfigWarning
-
-import scala.annotation.nowarn
 
 class ConfigCheckerSpec extends AkkaSpec {
 
