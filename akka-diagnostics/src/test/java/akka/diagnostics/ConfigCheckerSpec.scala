@@ -1075,7 +1075,7 @@ class ConfigCheckerSpec extends AkkaSpec(ConfigCheckerSpec.conf) {
         Vector(
           ConfigWarning(
             "typo",
-            """akka.grpc.client."helloworld.GreeterService".poort is not an Akka configuration setting. Did you mean one of 'akka.http.client.proxy.https.port', 'akka.management.http.port', 'akka.grpc.client.*.port'? Is it a typo or is it placed in the wrong section? Application specific properties should be placed outside the "akka" config tree.""",
+            """akka.grpc.client."helloworld.GreeterService".poort is not an Akka configuration setting. Did you mean one of 'akka.remote.classic.netty.tcp.port', 'akka.remote.classic.netty.ssl.port', 'akka.remote.artery.bind.port'? Is it a typo or is it placed in the wrong section? Application specific properties should be placed outside the "akka" config tree.""",
             List("""akka.grpc.client."helloworld.GreeterService".poort"""),
             List()),
           ConfigWarning(

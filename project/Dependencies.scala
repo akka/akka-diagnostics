@@ -11,7 +11,7 @@ object Dependencies {
   val buildScalaVersion = System.getProperty("akka.build.scalaVersion", Scala213)
   val AkkaManagementVersion = "1.2.0"
   val AkkaHttpVersion = "10.4.0"
-  val commonsLang = "org.apache.commons" % "commons-lang3" % "3.5" // ApacheV2
+  val commonsLang = "org.apache.commons" % "commons-lang3" % "3.12.0" // ApacheV2
 
   object Compile {
     val org = "com.typesafe.akka"
@@ -28,7 +28,7 @@ object Dependencies {
 
   object TestDeps {
     val scalaTest = "org.scalatest" %% "scalatest" % "3.0.8"
-    val junit = "junit" % "junit" % "4.12" // Common Public License 1.0
+    val junit = "junit" % "junit" % "4.13.2" // Common Public License 1.0
     val all = Seq(
       scalaTest % Test, // ApacheV2
       junit % Test, // Common Public License 1.0
