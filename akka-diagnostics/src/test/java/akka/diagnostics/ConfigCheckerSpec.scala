@@ -14,13 +14,8 @@ import akka.diagnostics.ConfigChecker.ConfigWarning
 
 import scala.annotation.nowarn
 
-object ConfigCheckerSpec {
-  val conf = ConfigFactory.parseString("""
-      akka.diagnostics.checker.enabled = on
-      """) // FIXME unnecessary
-}
+class ConfigCheckerSpec extends AkkaSpec {
 
-class ConfigCheckerSpec extends AkkaSpec(ConfigCheckerSpec.conf) {
   val reference = ConfigFactory.defaultReference()
 
   val defaultRemote = ConfigFactory
@@ -65,7 +60,7 @@ class ConfigCheckerSpec extends AkkaSpec(ConfigCheckerSpec.conf) {
 
   // for copy paste into config-checkers.rst
   def printDocWarnings(warnings: immutable.Seq[ConfigWarning]): Unit = {
-    if (true) // change to true when updating documentation, or debugging
+    if (false) // change to true when updating documentation, or debugging
       warnings.foreach { w =>
         val msg = s"| ${ConfigChecker.format(w)} |"
         val line = Vector.fill(msg.length - 2)("-").mkString("+", "", "+")
