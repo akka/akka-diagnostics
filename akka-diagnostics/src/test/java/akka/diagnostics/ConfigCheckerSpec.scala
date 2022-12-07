@@ -517,8 +517,8 @@ class ConfigCheckerSpec extends AkkaSpec(ConfigCheckerSpec.conf) {
           val checker = new ConfigChecker(extSys, c, reference)
           val warnings = checker.check().warnings
           printDocWarnings(warnings)
-          assertCheckerKey(warnings, "remote-watch-failure-detector")
-          assertDisabled(c, "remote-watch-failure-detector")
+          assertCheckerKey(warnings, "remote-watch-failure-detector", "power-user-settings")
+          assertDisabled(c, "remote-watch-failure-detector", "power-user-settings")
         }
       }
     }
@@ -805,7 +805,9 @@ class ConfigCheckerSpec extends AkkaSpec(ConfigCheckerSpec.conf) {
       // the logging is performed async after 200ms, and therefore we can intercept the log like this
       val sys2 = ActorSystem(system.name + "-2", c)
       try {
-        EventFilter.warning(start = "Lightbend recommendation", source = logSource, occurrences = 1).intercept {}(sys2)
+        EventFilter
+          .warning(start = "Configuration recommendation", source = logSource, occurrences = 1)
+          .intercept {}(sys2)
       } finally {
         shutdown(sys2)
       }

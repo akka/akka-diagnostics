@@ -12,7 +12,6 @@ import akka.dispatch.ThreadPoolConfig
 import akka.event.Logging
 import com.typesafe.config._
 import org.apache.commons.lang3.StringUtils
-import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable
@@ -84,9 +83,9 @@ object ConfigChecker {
 
     def logWarnings(result: ValidationResults): Unit =
       if (result.warnings.nonEmpty) {
-        val formatted = result.warnings.map(w => lightbendRecommendation(format(w)))
-        val log = LoggerFactory.getLogger(classOf[ConfigChecker].getName)
-        formatted.foreach(log.warn)
+        val formatted = result.warnings.map(w => recommendation(format(w)))
+        val log = Logging.getLogger(system, classOf[ConfigChecker].getName)
+        formatted.foreach(log.warning)
       }
 
     mode(system.settings.config) match {
@@ -102,8 +101,7 @@ object ConfigChecker {
       case FailOnWarnings =>
         val result = runChecks()
         if (result.warnings.nonEmpty)
-          throw new IllegalArgumentException(
-            lightbendRecommendation(result.warnings.map(format).mkString("\n* ", "\n* ", "\n")))
+          throw new IllegalArgumentException(recommendation(result.warnings.map(format).mkString("\n* ", "\n* ", "\n")))
     }
   }
 
@@ -118,9 +116,8 @@ object ConfigChecker {
     s"akka.diagnostics.checker.disabled-checks."
   }
 
-  private def lightbendRecommendation(msg: String): String =
-    s"Lightbend recommendation: $msg Please use http://support.lightbend.com/ if you " +
-    "need more advice around this warning."
+  private def recommendation(msg: String): String =
+    s"Configuration recommendation: $msg"
 
   /**
    * INTERNAL API
@@ -178,25 +175,15 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     config.getStringList("akka.diagnostics.checker.confirmed-power-user-settings").asScala.toSet
   private[akka] val (powerUserSettings: Set[String], powerUserWildcardSettings: Set[String]) = {
     val fullList =
-      expandPowerUserSettings(config.getStringList("akka.diagnostics.checker.power-user-settings").asScala.toSet)
+      config
+        .getStringList("akka.diagnostics.checker.power-user-settings")
+        .asScala
+        .toSet
         .diff(confirmedPowerUserSettings)
     val (wildcards, exact) = fullList.partition(_.endsWith(".*"))
     val wildcardPrefixes = wildcards.map(s => s.substring(0, s.length - 2))
 
     (exact, wildcardPrefixes)
-  }
-
-  private def expandPowerUserSettings(settings: Set[String]): Set[String] = {
-//    // FIXME remove these automatic additions when only using AKka 2.6
-//    if (isAkka27)
-//      settings.flatMap { s =>
-//        if (s.startsWith("akka.remote.") && !s.startsWith("akka.remote.classic.") && !s.startsWith("akka.remote.artery."))
-//          s :: remoteConfigPath(s) :: Nil // add .classic automatically for Akka 2.5 and 2.6 support
-//        else
-//          s :: Nil
-//      }
-//    else
-    settings
   }
 
   private val disabledTypoSections: Set[String] = {
@@ -665,9 +652,6 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   }
 
   private def remoteConfigPath(path: String): String = {
-//    if (isAkka26)
-//      "akka.remote.classic" + path.substring(11)
-//    else
     path
   }
 
@@ -675,12 +659,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     if (isRemoteConfigAvailable) {
       Vector.empty[ConfigWarning] ++
       checkRemoteDispatcher() ++
-      checkSecureCookie() ++
-//      checkTransportFailureDetector() ++
       checkRemoteWatchFailureDetector() ++
-//      checkRetryGate() ++
-//      checkPruneQuarantine() ++
-//      checkEnabledTransports() ++
       checkHostname() ++
       checkFrameSize() ++
       checkRemoteDispatcherSize()
@@ -699,66 +678,6 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
           "It can be things like serialization and blocking DNS lookups.")
       else Nil
     }
-
-  private def checkSecureCookie(): List[ConfigWarning] = //TODO probably not needed
-    ifEnabled("secure-cookie") { checkerKey =>
-//      if (!isAkka26 && (config.getBoolean("akka.remote.require-cookie") || config.getString("akka.remote.secure-cookie") != ""))
-//        warn(checkerKey, List("akka.remote.require-cookie", "akka.remote.secure-cookie"),
-//          s"Secure cookie is not a proper security solution. It is deprecated in Akka 2.4.x.")
-//      else Nil
-      Nil
-    }
-
-//  private def checkTransportFailureDetector(): List[ConfigWarning] =
-//    ifEnabled("transport-failure-detector") { checkerKey =>
-//      val path = remoteConfigPath("akka.remote.transport-failure-detector")
-//
-//      val heartbeatInterval = config.getDuration(path + ".heartbeat-interval", MILLISECONDS).millis
-//      val acceptable = config.getDuration(path + ".acceptable-heartbeat-pause", MILLISECONDS).millis
-//
-//      val w1 =
-//        if (heartbeatInterval < 1.second)
-//          warn(
-//            checkerKey,
-//            path + ".heartbeat-interval",
-//            s"Transport failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
-//            "is probably too short to be meaningful.")
-//        else if (heartbeatInterval > 30.seconds)
-//          warn(
-//            checkerKey,
-//            path + ".heartbeat-interval",
-//            s"Transport failure detector heartbeat-interval of [${heartbeatInterval.toMillis} ms] " +
-//            "is probably too long to be meaningful.")
-//        else Nil
-//
-//      val w2 =
-//        if (acceptable < 15.second)
-//          warn(
-//            checkerKey,
-//            path + ".acceptable-heartbeat-pause",
-//            s"Transport failure detector acceptable-heartbeat-pause of [${acceptable.toMillis} ms] " +
-//            "is probably too short to be meaningful. It may cause too many unecessary reconnects.")
-//        else if (acceptable > 2.minutes)
-//          warn(
-//            checkerKey,
-//            path + ".acceptable-heartbeat-pause",
-//            s"Transport failure detector acceptable-heartbeat-pause of [${acceptable.toMillis}} ms] " +
-//            "is probably too long to be meaningful.")
-//        else Nil
-//
-//      val ratio = acceptable.toMillis / heartbeatInterval.toMillis
-//      val w3 =
-//        if (ratio < 3)
-//          warn(
-//            checkerKey,
-//            List(path + ".acceptable-heartbeat-pause", path + ".heartbeat-interval"),
-//            s"Transport failure detector ratio [$ratio] between acceptable-heartbeat-pause and heartbeat-interval " +
-//            "is too small, decrease the heartbeat-interval and/or increase acceptable-heartbeat-pause. " +
-//            "Otherwise it may cause too many unecessary reconnects.")
-//        else Nil
-//
-//      List(w1, w2, w3).flatten
-//    }
 
   private def checkRemoteWatchFailureDetector(): List[ConfigWarning] =
     ifEnabled("remote-watch-failure-detector") { checkerKey =>
@@ -822,57 +741,6 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
 
       List(w1, w2, w3, w4).flatten
     }
-
-//  private def checkRetryGate(): List[ConfigWarning] =
-//    ifEnabled("retry-gate-closed-for") { checkerKey =>
-//      val path = remoteConfigPath("akka.remote.retry-gate-closed-for")
-//      val retryGate = config.getDuration(path, MILLISECONDS).millis
-//      if (retryGate < 1.second)
-//        warn(
-//          checkerKey,
-//          path,
-//          s"Remote retry-gate-closed-for of [${retryGate.toMillis} ms] " +
-//          "is probably too short to be meaningful. This setting controls how much time should " +
-//          "be elapsed before reattempting a new connection after a failed outbound connection. " +
-//          "Setting it to a short interval may result in a storm of reconnect attempts. ")
-//      else if (retryGate > 10.seconds)
-//        warn(
-//          checkerKey,
-//          path,
-//          s"Remote retry-gate-closed-for of [${retryGate.toMillis} ms] " +
-//          "is probably too long. All messages sent to the gated address are dropped during the " +
-//          "gating period.")
-//      else Nil
-//    }
-
-//  private def checkPruneQuarantine(): List[ConfigWarning] =
-//    ifEnabled("prune-quarantine-marker-after") { checkerKey =>
-//      val path = remoteConfigPath("akka.remote.prune-quarantine-marker-after")
-//      val pruneQuarantine = config.getDuration(path, MILLISECONDS).millis
-//      if (pruneQuarantine < 1.day)
-//        warn(
-//          checkerKey,
-//          path,
-//          s"Don't change prune-quarantine-marker-after to a small value to re-enable communication with " +
-//          "quarantined nodes. Such feature is not supported and any behavior between the affected systems after " +
-//          "lifting the quarantine is undefined.")
-//      else Nil
-//    }
-
-//  private def checkEnabledTransports(): List[ConfigWarning] =
-//    ifEnabled("enabled-transports") { checkerKey =>
-//      val path = remoteConfigPath("akka.remote.enabled-transports")
-//      val transports = config.getStringList(path).asScala.toSet
-//      val suspectTransports =
-//        transports - remoteConfigPath("akka.remote.netty.tcp") - remoteConfigPath("akka.remote.netty.ssl")
-//      if (suspectTransports.nonEmpty)
-//        warn(
-//          checkerKey,
-//          path,
-//          s"[${suspectTransports.mkString(", ")}] ${if (suspectTransports.size > 1) "are" else "is"} not a " +
-//          "recommended transport for remote actor messages in production.")
-//      else Nil
-//    }
 
   private def checkHostname(): List[ConfigWarning] =
     ifEnabled("hostname") { checkerKey =>
@@ -1147,21 +1015,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
               "Please remove the auto-down configuration.")
           else Nil
 
-        val w5 = {
-          val providerClass = config.getString(downingProviderPath)
-          providerClass match {
-            case "com.lightbend.akka.sbr.SplitBrainResolverProvider" =>
-              warn(
-                checkerKey,
-                downingProviderPath,
-                s"Downing provider of [$providerClass] has been superceded by the open-source Split Brain Resolver included " +
-                "with Akka.  Bug fixes will in the future be applied to the open source SBR.")
-
-            case _ => Nil
-          }
-        }
-
-        List(w1, w2, w3, w4, w5).flatten
+        List(w1, w2, w3, w4).flatten
       } else Nil
 
     }
