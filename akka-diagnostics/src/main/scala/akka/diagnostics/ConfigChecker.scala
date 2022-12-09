@@ -42,7 +42,7 @@ object ConfigChecker {
   /**
    * Main method to run the `ConfigChecker` as a java program. The configuration is loaded by the Lightbend Config
    * library, i.e. "application.conf" if you don't specify another file with for example `-Dconfig.file`. See
-   * https://github.com/typesafehub/config for details of how to specify configuration location.
+   * https://github.com/lightbend/config for details of how to specify configuration location.
    *
    * Potential configuration issues, if any, are printed to `System.out` and the JVM is exited with -1 status code.
    *
@@ -549,13 +549,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
           s"This machine has [$availableProcessors] available processors. " +
           "If you use a large pool size here because of blocking execution you should instead use " +
           "a dedicated dispatcher to manage blocking tasks/actors. Blocking execution shouldn't " +
-          "run on the default-dispatcher because that may starve system internal tasks.")
+          "run on the default-dispatcher because that may starve other tasks.")
       else if (size <= 3)
-        warn(
-          checkerKey,
-          path,
-          s"Don't use too small pool size [$size] for the default-dispatcher. " +
-          "Internal actors and tasks may run on the default-dispatcher.")
+        warn(checkerKey, path, s"Don't use too small pool size [$size] for the default-dispatcher. ")
       else Nil
     }
 
@@ -609,7 +605,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
 
   private def checkNumberOfDispatchers(dispatchers: Map[String, Config]): List[ConfigWarning] =
     ifEnabled("dispatcher-count") { checkerKey =>
-      val customDispatchers = dispatchers.collect { case (p, _) if !isLightbendInternalDispatcher(p) => p }
+      val customDispatchers = dispatchers.collect { case (p, _) if !isAkkaSystemDispatcher(p) => p }
       if (customDispatchers.size > 6)
         warn(
           checkerKey,
@@ -620,7 +616,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       else Nil
     }
 
-  private def isLightbendInternalDispatcher(configPath: String): Boolean =
+  private def isAkkaSystemDispatcher(configPath: String): Boolean =
     knownDispatcherPrefixes.exists(prefix => configPath.startsWith(prefix))
 
   private def checkTotalDispatcherPoolSize(dispatchers: Map[String, Config]): List[ConfigWarning] =
@@ -628,7 +624,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val sizes = dispatchers.collect {
         // FIXME does the filtering really make sense here, don't we want to include the lightbend
         // dispatcher pool sizes as well?
-        case (p, c) if !isLightbendInternalDispatcher(p) =>
+        case (p, c) if !isAkkaSystemDispatcher(p) =>
           val cfgWithFallback = c.withFallback(system.dispatchers.defaultDispatcherConfig)
           p -> Try(dispatcherPoolSize(cfgWithFallback)).getOrElse(0)
       }
@@ -765,26 +761,8 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
               s"On this machine `InetAddress.getLocalHost.getHostAddress` is [${InetAddress.getLocalHost.getHostName}].")
           case _ => Nil
         }
-
       } else {
-//        // classic remoting
-//        config.getStringList(remoteConfigPath("akka.remote.enabled-transports")).asScala.toList.flatMap { t =>
-//          if ((t == remoteConfigPath("akka.remote.netty.tcp") && config.getString(t + ".hostname") == "") ||
-//            (t == remoteConfigPath("akka.remote.netty.ssl") && config.getString(t + ".hostname") == ""))
-//            warn(
-//              checkerKey,
-//              t + ".hostname",
-//              s"hostname is not defined, which means that `InetAddress.getLocalHost.getHostAddress` " +
-//              "will be used to resolve the hostname. That can result in wrong hostname in some environments, " +
-//              """such as "localhost". Define the hostname explicitly instead. """ +
-//              s"On this machine `InetAddress.getLocalHost.getHostAddress` is [${InetAddress.getLocalHost.getHostAddress}].")
-//          else Nil
-        //*******************************************
-        //        # This flag disabled Artery in Akka 2.6.x and 2.7.x. If it is set to off with Akka 2.8.0 or later
-        //        # an exception will be thrown at startup with the purpose to notify the user that Classic Remoting
-        //        # has been removed.
-        //          enabled = on
-        throw new IllegalArgumentException("'akka.remote.artery.enabled = off' is not allowed")
+        Nil
       }
     }
 
@@ -804,10 +782,6 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
             "for large payloads.")
         else Nil
       }
-
-//      List(
-//        checkFrameSizeAt(remoteConfigPath("akka.remote.netty.tcp.maximum-frame-size")),
-//        checkFrameSizeAt(remoteConfigPath("akka.remote.netty.ssl.maximum-frame-size"))).flatten
       List(checkFrameSizeAt(remoteConfigPath("akka.remote.artery.advanced.maximum-frame-size"))).flatten
     }
   }
@@ -939,7 +913,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
             "not be changed. If you have Cluster related problems when using the default-dispatcher that is typically " +
             "an indication that you are running blocking or CPU intensive actors/tasks on the default-dispatcher. " +
             "Use dedicated dispatchers for such actors/tasks instead of running them on the default-dispatcher, " +
-            "because that may starve system internal tasks.")
+            "because that may starve other tasks.")
           val w2 =
             if (size < 2)
               warn(

@@ -39,8 +39,8 @@ object Dependencies {
 
   val akkaDiagnostics = Seq(
     commonsLang, // for levenshtein distance impl
-    akkaRemoting,
-    akkaClusterMetrics,
+    akkaRemoting % Provided,
+    akkaClusterMetrics % Provided,
     management % Provided,
     httpSprayJson % Provided,
     http % Test, // just needed to tie the versions down, management pulls newer version in

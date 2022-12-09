@@ -8,6 +8,7 @@ The Akka Thread Starvation Detector is a diagnostic tool that monitors the dispa
 @@@ index
 
 * [Akka Starvation Detector](starvation-detector.md)
+* [Config Checker](config-checker.md)
 
 @@@
 

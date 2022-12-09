@@ -41,7 +41,7 @@ recommendations at warning log level. Those log messages start with "Lightbend r
 so it should be easy to find them. Such a recommendation log message may look like:
 
 ```
-[WARN] [10/01/2015 18:25:03.107] [main] [akka.diagnostics.ConfigChecker] Lightbend recommendation: Use throughput-deadline-time when dispatcher is configured with high throughput [200] batching to avoid unfair processing. Related config properties: [my-dispatcher.throughput = 200, my-dispatcher.throughput-deadline-time]. You may disable this check by adding [dispatcher-throughput] to configuration string list akka.diagnostics.checker.disabled-checks. Please use http://support.lightbend.com/ if you need more advice around this warning.
+[WARN] [10/01/2015 18:25:03.107] [main] [akka.diagnostics.ConfigChecker] Configuration recommendation: Use throughput-deadline-time when dispatcher is configured with high throughput [200] batching to avoid unfair processing. Related config properties: [my-dispatcher.throughput = 200, my-dispatcher.throughput-deadline-time]. You may disable this check by adding [dispatcher-throughput] to configuration string list akka.diagnostics.checker.disabled-checks.
 ```
 
 The log messages are emitted by the `akka.diagnostics.ConfigChecker` logger, which is good to
@@ -260,20 +260,6 @@ There are a few more checks related to the Remote watch failure detector:
  * sane ratio betwen `heartbeat-interval` and `acceptable-heartbeat-pause`
  * sane relation between `heartbeat-interval` and `unreachable-nodes-reaper-interval`
 
-### Transport Failure Detector
-
-The remote transport failure detector is the least interesting of the three and you should normally
-not touch it. It is used for detecting broken associations (connections), but when using TCP (or SSL)
-that is handled by TCP itself in most cases.
-
-There are similar checks as for the Cluster and Remote watch failure detectors:
-
- * not too short `heartbeat-interval`
- * not too long `heartbeat-interval`
- * not too short `acceptable-heartbeat-pause`
- * not too long `acceptable-heartbeat-pause`
- * sane ratio betwen `heartbeat-interval` and `acceptable-heartbeat-pause`
-
 ## More akka-actor checks
 
 ### actor-ref-provider
@@ -291,33 +277,6 @@ Don't use jvm-exit-on-fatal-error=off. It's safer to shutdown the JVM in case of
 
 ## More akka-remote checks
 
-### remote-dispatcher
-
-```
-Use a dedicated dispatcher for remoting instead of default-dispatcher. The internal actors in remoting may use the threads in a way that should not interfere with other system internal tasks that are running on the default-dispatcher. It can be things like serialization and blocking DNS lookups. Related config properties: [akka.remote.use-dispatcher = akka.actor.default-dispatcher]. Corresponding default values: [akka.remote.use-dispatcher = akka.remote.default-remote-dispatcher]. You may disable this check by adding [remote-dispatcher] to configuration string list akka.diagnostics.checker.disabled-checks.
-```
-
-### secure-cookie
-
-```
-Secure cookie is not a proper security solution. It is deprecated in Akka 2.4.x. Related config properties: [akka.remote.require-cookie = on, akka.remote.secure-cookie = abc]. Corresponding default values: [akka.remote.require-cookie = off, akka.remote.secure-cookie = ]. You may disable this check by adding [secure-cookie] to configuration string list akka.diagnostics.checker.disabled-checks.
-```
-
-### retry-gate-closed-for
-
-```
-Remote retry-gate-closed-for of [100 ms] is probably too short to be meaningful. This setting controls how much time should be elapsed before reattempting a new connection after a failed outbound connection. Setting it to a short interval may result in a storm of reconnect attempts.  Related config properties: [akka.remote.retry-gate-closed-for = 100ms]. Corresponding default values: [akka.remote.retry-gate-closed-for = 5 s]. You may disable this check by adding [retry-gate-closed-for] to configuration string list akka.diagnostics.checker.disabled-checks.
-```
-
-```
-Remote retry-gate-closed-for of [11000 ms] is probably too long. All messages sent to the gated address are dropped during the gating period. Related config properties: [akka.remote.retry-gate-closed-for = 11s]. Corresponding default values: [akka.remote.retry-gate-closed-for = 5 s]. You may disable this check by adding [retry-gate-closed-for] to configuration string list akka.diagnostics.checker.disabled-checks.
-```
-
-### prune-quarantine-marker-after
-
-```
-Don't change prune-quarantine-marker-after to a small value to re-enable communication with quarantined nodes. Such feature is not supported and any behavior between the affected systems after lifting the quarantine is undefined. Related config properties: [akka.remote.prune-quarantine-marker-after = 3600s]. Corresponding default values: [akka.remote.prune-quarantine-marker-after = 5 d]. You may disable this check by adding [prune-quarantine-marker-after] to configuration string list akka.diagnostics.checker.disabled-checks.
-```
 
 ### enabled-transports
 
@@ -326,12 +285,6 @@ Don't change prune-quarantine-marker-after to a small value to re-enable communi
 ```
 
 ### hostname
-
-*If using the classic remoting:*
-
-```
-hostname is not defined, which means that *InetAddress.getLocalHost.getHostAddress* will be used to resolve the hostname. That can result in wrong hostname in some environments, such as "127.0.1.1". Define the hostname explicitly instead. On this machine *InetAddress.getLocalHost.getHostAddress* is [192.168.2.189]. Related config properties: [akka.remote.netty.tcp.hostname = ]. Corresponding default values: [akka.remote.netty.tcp.hostname = ]. You may disable this check by adding [hostname] to configuration string list akka.diagnostics.checker.disabled-checks.
-```
 
 *If using Artery:*
 
@@ -348,7 +301,7 @@ or
 ### maximum-frame-size
 
 ```
-You have configured maximum-frame-size to [2097152 bytes]. We recommend against sending too large messages, since that may cause other messages to be delayed. For example, it's important that failure detector heartbeat messages have a chance to get through without too long delays. Try to split up large messages into smaller chunks, or use another communication channel (HTTP, Akka IO) for large payloads. Related config properties: [akka.remote.netty.tcp.maximum-frame-size = 2MiB]. Corresponding default values: [akka.remote.netty.tcp.maximum-frame-size = 128000b]. You may disable this check by adding [maximum-frame-size] to configuration string list akka.diagnostics.checker.disabled-checks.
+You have configured maximum-frame-size to [2097152 bytes]. We recommend against sending too large messages, since that may cause other messages to be delayed. For example, it's important that failure detector heartbeat messages have a chance to get through without too long delays. Try to split up large messages into smaller chunks, or use another communication channel (HTTP, Akka IO) for large payloads. Related config properties: [akka.remote.artery.advanced.maximum-frame-size = 2MiB]. Corresponding default values: [akka.remote.artery.advanced.maximum-frame-size = 128000b]. You may disable this check by adding [maximum-frame-size] to configuration string list akka.diagnostics.checker.disabled-checks.
 ```
 
 ### default-remote-dispatcher-size
