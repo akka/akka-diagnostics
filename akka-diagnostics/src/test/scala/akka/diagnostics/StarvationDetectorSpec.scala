@@ -25,7 +25,7 @@ import akka.diagnostics.StarvationDetector.StarvationDetectorThread
 
 import scala.concurrent.ExecutionContext
 
-class StarvationDetectorSpec extends AkkaSpec(s"""akka.diagnostics.recorder.enabled = off
+class StarvationDetectorSpec extends AkkaSpec(s"""
       akka.diagnostics.starvation-detector.check-interval              = 200ms # check more often
       akka.diagnostics.starvation-detector.initial-delay               = 0     # no initial delay
       akka.diagnostics.starvation-detector.max-delay-warning-threshold = 30ms  # make check tighter

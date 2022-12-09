@@ -1,6 +1,8 @@
 # Akka Diagnostics
 
 The Akka Thread Starvation Detector is a diagnostic tool that monitors the dispatcher of an ActorSystem and will log a warning if the dispatcher becomes unresponsive.
+The Config Checker tries to help you by finding potential configuration issues.
+
 [Akka](https://akka.io)
 
 @@toc { depth=2 }
@@ -8,6 +10,7 @@ The Akka Thread Starvation Detector is a diagnostic tool that monitors the dispa
 @@@ index
 
 * [Akka Starvation Detector](starvation-detector.md)
+* [Config Checker](config-checker.md)
 
 @@@
 
