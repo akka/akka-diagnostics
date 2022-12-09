@@ -534,8 +534,8 @@ class ConfigCheckerSpec extends AkkaSpec {
         withClue(s"problem with config #${i + 1}") {
           val checker = new ConfigChecker(extSys, c, reference)
           val warnings = checker.check().warnings
-          assertCheckerKey(warnings, "cluster-failure-detector")
-          assertDisabled(c, "cluster-failure-detector")
+          assertCheckerKey(warnings, "cluster-failure-detector", "power-user-settings")
+          assertDisabled(c, "cluster-failure-detector", "power-user-settings")
         }
       }
     }
