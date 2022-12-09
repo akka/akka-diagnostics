@@ -21,15 +21,13 @@ adjustment is needed.
 
 ## Using the Configuration Checker
 
-To use the Starvation Detector feature a dependency on the *akka-diagnostics* artifact must be added.
+To use the Configuration Checker feature a dependency on the *akka-diagnostics* artifact must be added.
 
 @@dependency [Maven,sbt,Gradle] {
 group=com.lightbend.akka
 artifact=akka-diagnostics_$scala.binary.version$
 version=$project.version$
 }
-
-@@include[includes/common.md](includes/common.md) { #find-credentials }
 
 When this dependency is included the Configuration Checker is automatically run when the *ActorSystem*
 is started.
