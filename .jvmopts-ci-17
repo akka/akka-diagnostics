@@ -3,3 +3,4 @@
 -Xms1G
 -Xmx1G
 -Xss2M
+--add-opens=java.base/java.util.concurrent=ALL-UNNAMED
