@@ -70,7 +70,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
         // TSD can find. Tried to set lower bounds with system property
         // `java.util.concurrent.ForkJoinPool.common.maximumSpares` but that didn't help
 
-        AntiPatterns
+        (AntiPatterns ++ AntiPatternsBeforeJDK13)
           .filterNot(p =>
             p.name == "CompletableFuture.get" && (dispatcherId == DefaultDispatcherId || dispatcherId.contains("fjp")))
           .foreach { case AntiPattern(name, expected, block) =>
@@ -152,20 +152,10 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
 
   // A collection of blocking AntiPatterns to test, each should take ~ 100ms
   lazy val AntiPatterns: Seq[AntiPattern] = Seq(
-    antiPattern("Thread.sleep", "Thread.sleep blocks a thread") { Thread.sleep(100) },
+    antiPattern("Thread.sleep", "Thread.sleep blocks a thread") { Thread.sleep(100) }
     // Await currently mostly works because it uses the blocking context (it might spawn excessive amounts of extra threads, though)
     // antiPattern("Await", "Await.ready / Await.result blocks a thread")(Try(Await.ready(Promise().future, 100.millis))),
-    antiPattern("Socket connect", "java.net API is synchronous and blocks a thread") {
-      new Socket().connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
-    },
-    antiPattern("Socket read", "java.net API is synchronous and blocks a thread") {
-      val s = new Socket()
-      try {
-        s.setSoTimeout(newTimeOut())
-        s.connect(new InetSocketAddress("www.google.com", 80))
-        s.getInputStream.read()
-      } finally s.close()
-    },
+    ,
     antiPattern("FileOutputStream.write", "java.io API is synchronous") {
       val tmp = File.createTempFile("bigfile", "txt")
       tmp.deleteOnExit()
@@ -183,6 +173,25 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
 
       Try(f.get(100, TimeUnit.MILLISECONDS))
     })
+
+  //As per https://openjdk.org/jeps/353 in Java 13: "The new implementation, NioSocketImpl, is a drop-in replacement for PlainSocketImpl."
+  // "Socket operations using timeouts (connect, accept, read) are implemented by changing the socket to non-blocking mode and polling the socket."
+  lazy val AntiPatternsBeforeJDK13: Seq[AntiPattern] =
+    if (System.getProperty("java.version").split('.').head.toInt < 13) {
+      Seq(
+        antiPattern("Socket connect", "java.net API is synchronous and blocks a thread") {
+          new Socket()
+            .connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
+        },
+        antiPattern("Socket read", "java.net API is synchronous and blocks a thread") {
+          val s = new Socket()
+          try {
+            s.setSoTimeout(newTimeOut())
+            s.connect(new InetSocketAddress("www.google.com", 80))
+            s.getInputStream.read()
+          } finally s.close()
+        })
+    } else Nil
 
   private def newTimeOut(): Int = ThreadLocalRandom.current().nextInt(80, 120)
 }
