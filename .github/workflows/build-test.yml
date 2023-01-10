@@ -65,7 +65,7 @@ jobs:
           sbt ++2.12 compile Test/compile
           
   test-diagnostics-11:
-    name: Run tests
+    name: Run tests 11
     runs-on: ubuntu-22.04
     if: github.repository == 'akka/akka-diagnostics'
     steps:
@@ -93,7 +93,7 @@ jobs:
           sbt test
 
   test-diagnostics-17:
-    name: Run tests
+    name: Run tests 17
     runs-on: ubuntu-22.04
     if: github.repository == 'akka/akka-diagnostics'
     steps:
