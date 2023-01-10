@@ -49,6 +49,12 @@ You can customize settings of the starvation detector to prevent spurious loggin
 By default, the starvation detector runs seldom enough not to cause any performance hit itself. Thread starvation issues usually affect
 systems for longer time spans, so the starvation detector is still likely to experience and warn even when it runs only infrequently.
 
+@@@ note { title="Java 17" }
+
+When using the Starvation Detector with Java 17 you have to add JVM flag `--add-opens=java.base/java.util.concurrent=ALL-UNNAMED`.
+
+@@@
+
 ## Understanding The Log Output
 
 Here's an example warning (taken from our tests that simulate blocking calls using `Thread.sleep`):
