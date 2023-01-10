@@ -49,7 +49,10 @@ lazy val common: Seq[Setting[_]] =
       val akkaProperties = System.getProperties.stringPropertyNames.asScala.toList.collect {
         case key: String if key.startsWith("akka.") => "-D" + key + "=" + System.getProperty(key)
       }
-      "-Xms1G" :: "-Xmx1G" :: "-XX:MaxDirectMemorySize=256M" :: "--add-opens=java.base/java.util.concurrent=ALL-UNNAMED" :: akkaProperties
+      val openModules =
+        if (System.getProperty("java.version").split('.').head.toInt < 17) Nil
+        else Seq("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED")
+      "-Xms1G" :: "-Xmx1G" :: "-XX:MaxDirectMemorySize=256M" :: akkaProperties ++ openModules
     },
     projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
     Global / excludeLintKeys += projectInfoVersion)
