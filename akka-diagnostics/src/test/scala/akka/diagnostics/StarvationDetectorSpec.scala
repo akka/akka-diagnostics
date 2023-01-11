@@ -152,10 +152,21 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
 
   // A collection of blocking AntiPatterns to test, each should take ~ 100ms
   lazy val AntiPatterns: Seq[AntiPattern] = Seq(
-    antiPattern("Thread.sleep", "Thread.sleep blocks a thread") { Thread.sleep(100) }
+    antiPattern("Thread.sleep", "Thread.sleep blocks a thread") { Thread.sleep(100) },
     // Await currently mostly works because it uses the blocking context (it might spawn excessive amounts of extra threads, though)
     // antiPattern("Await", "Await.ready / Await.result blocks a thread")(Try(Await.ready(Promise().future, 100.millis))),
-    ,
+    antiPattern("Socket connect", "java.net API is synchronous and blocks a thread") {
+      new Socket()
+        .connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
+    },
+    antiPattern("Socket read", "java.net API is synchronous and blocks a thread") {
+      val s = new Socket()
+      try {
+        s.setSoTimeout(newTimeOut())
+        s.connect(new InetSocketAddress("www.google.com", 80))
+        s.getInputStream.read()
+      } finally s.close()
+    },
     antiPattern("FileOutputStream.write", "java.io API is synchronous") {
       val tmp = File.createTempFile("bigfile", "txt")
       tmp.deleteOnExit()
@@ -172,18 +183,6 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
       val f = new CompletableFuture
 
       Try(f.get(100, TimeUnit.MILLISECONDS))
-    },
-    antiPattern("Socket connect", "java.net API is synchronous and blocks a thread") {
-      new Socket()
-        .connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
-    },
-    antiPattern("Socket read", "java.net API is synchronous and blocks a thread") {
-      val s = new Socket()
-      try {
-        s.setSoTimeout(newTimeOut())
-        s.connect(new InetSocketAddress("www.google.com", 80))
-        s.getInputStream.read()
-      } finally s.close()
     })
 
   private def newTimeOut(): Int = ThreadLocalRandom.current().nextInt(80, 120)
