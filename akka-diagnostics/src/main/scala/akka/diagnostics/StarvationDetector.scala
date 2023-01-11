@@ -235,7 +235,7 @@ object StarvationDetector {
               case Failure(ex) =>
                 ex match {
                   case _: InaccessibleObjectException => throw ex //stopping Starvation Detector
-                  case _ => s"[Could not get thread info because ${ex.toString}]"
+                  case _                              => s"[Could not get thread info because ${ex.toString}]"
                 }
             }
 
