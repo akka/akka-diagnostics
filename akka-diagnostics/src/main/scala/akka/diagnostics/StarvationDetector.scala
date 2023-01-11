@@ -15,7 +15,6 @@ import akka.event.Logging
 import akka.event.LoggingAdapter
 import com.typesafe.config.Config
 
-import java.lang.reflect.InaccessibleObjectException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadLocalRandom
@@ -233,9 +232,10 @@ object StarvationDetector {
                   s"Stack traces:\n$stacks"
                 }
               case Failure(ex) =>
-                ex match {
-                  case _: InaccessibleObjectException => throw ex //stopping Starvation Detector
-                  case _                              => s"[Could not get thread info because ${ex.toString}]"
+                ex.getClass.getName match {
+                  case "java.lang.reflect.InaccessibleObjectException" => //FIXME avoid using class name when JDK 8 is not supported
+                    throw InaccessibleObjectException(ex.getMessage, ex.getCause) // stopping Starvation Detector
+                  case _ => s"[Could not get thread info because ${ex.toString}]"
                 }
             }
 
@@ -478,3 +478,5 @@ object StarvationDetector {
     ap => threadFactoryField.get(ap).asInstanceOf[MonitorableThreadFactory]
   }
 }
+
+private final case class InaccessibleObjectException(msg: String, ex: Throwable) extends RuntimeException(msg, ex)
