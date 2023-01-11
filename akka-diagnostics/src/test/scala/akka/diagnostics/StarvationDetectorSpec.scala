@@ -173,11 +173,11 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
 
       Try(f.get(100, TimeUnit.MILLISECONDS))
     },
-    antiPattern("Socket connect", "java.net.Socket is synchronous and blocks a thread") {
+    antiPattern("Socket connect", "java.net API is synchronous and blocks a thread") {
       new Socket()
         .connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
     },
-    antiPattern("Socket read", "java.net.Socket is synchronous and blocks a thread") {
+    antiPattern("Socket read", "java.net API is synchronous and blocks a thread") {
       val s = new Socket()
       try {
         s.setSoTimeout(newTimeOut())
