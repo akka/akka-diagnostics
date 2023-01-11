@@ -3,6 +3,10 @@ import akka.AutomaticModuleName
 GlobalScope / parallelExecution := false
 Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
 
+val specificationVersion: String = sys.props("java.specification.version")
+val isJdk17orHigher: Boolean =
+  VersionNumber(specificationVersion).matchesSemVer(SemanticSelector(">=17"))
+
 inThisBuild(
   Seq(
     organization := "com.lightbend.akka",
@@ -50,8 +54,8 @@ lazy val common: Seq[Setting[_]] =
         case key: String if key.startsWith("akka.") => "-D" + key + "=" + System.getProperty(key)
       }
       val openModules =
-        if (System.getProperty("java.version").split('.').head.toInt < 17) Nil
-        else Seq("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED")
+        if (isJdk17orHigher) Seq("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED")
+        else Nil
       "-Xms1G" :: "-Xmx1G" :: "-XX:MaxDirectMemorySize=256M" :: akkaProperties ++ openModules
     },
     projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
