@@ -267,9 +267,8 @@ object StarvationDetector {
           try checkOnce()
           catch {
             case e: InaccessibleObjectException =>
-              log.warning(
-                s"Stopping Starvation detector. Reason: ${e.getMessage}" +
-                "Probably you are missing some JVM parameters. See 'note' in https://doc.akka.io/docs/akka-diagnostics/current/starvation-detector.html#configuration")
+              log.warning(s"Stopping Starvation detector. Reason: ${e.getMessage}. \n" +
+              s"Probably you are missing some JVM parameters. See 'note' in https://doc.akka.io/docs/akka-diagnostics/current/starvation-detector.html#configuration")
               return
             case NonFatal(ex) =>
               log.error(
