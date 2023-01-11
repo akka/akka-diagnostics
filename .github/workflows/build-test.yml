@@ -117,5 +117,5 @@ jobs:
 
       - name: sbt test
         run: |-
-          cp .jvmopts-ci-17 .jvmopts
+          cp .jvmopts-ci .jvmopts
           sbt test
