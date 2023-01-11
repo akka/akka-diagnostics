@@ -70,7 +70,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
         // TSD can find. Tried to set lower bounds with system property
         // `java.util.concurrent.ForkJoinPool.common.maximumSpares` but that didn't help
 
-        (AntiPatterns ++ AntiPatternsBeforeJDK13)
+        AntiPatterns
           .filterNot(p =>
             p.name == "CompletableFuture.get" && (dispatcherId == DefaultDispatcherId || dispatcherId.contains("fjp")))
           .foreach { case AntiPattern(name, expected, block) =>
@@ -172,26 +172,19 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
       val f = new CompletableFuture
 
       Try(f.get(100, TimeUnit.MILLISECONDS))
+    },
+    antiPattern("Socket connect", "java.net.Socket is synchronous and blocks a thread") {
+      new Socket()
+        .connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
+    },
+    antiPattern("Socket read", "java.net.Socket is synchronous and blocks a thread") {
+      val s = new Socket()
+      try {
+        s.setSoTimeout(newTimeOut())
+        s.connect(new InetSocketAddress("www.google.com", 80))
+        s.getInputStream.read()
+      } finally s.close()
     })
-
-  //As per https://openjdk.org/jeps/353 in Java 13: "The new implementation, NioSocketImpl, is a drop-in replacement for PlainSocketImpl."
-  // "Socket operations using timeouts (connect, accept, read) are implemented by changing the socket to non-blocking mode and polling the socket."
-  lazy val AntiPatternsBeforeJDK13: Seq[AntiPattern] =
-    if (System.getProperty("java.version").split('.').head.toInt < 13) {
-      Seq(
-        antiPattern("Socket connect", "java.net API is synchronous and blocks a thread") {
-          new Socket()
-            .connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
-        },
-        antiPattern("Socket read", "java.net API is synchronous and blocks a thread") {
-          val s = new Socket()
-          try {
-            s.setSoTimeout(newTimeOut())
-            s.connect(new InetSocketAddress("www.google.com", 80))
-            s.getInputStream.read()
-          } finally s.close()
-        })
-    } else Nil
 
   private def newTimeOut(): Int = ThreadLocalRandom.current().nextInt(80, 120)
 }
