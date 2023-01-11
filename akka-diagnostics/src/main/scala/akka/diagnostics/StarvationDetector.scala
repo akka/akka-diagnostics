@@ -421,17 +421,12 @@ object StarvationDetector {
         "java.net",
         "java.net API is synchronous and blocks a thread. Use an asynchronous network API instead like Akka TCP, Akka Stream TCP, or java.nio.channels.SocketChannel.",
         None,
-        topFrameIs(classStartsWith("java.net"))),
+        anyFrameIs(classStartsWith("java.net"))),
       Problem(
         "java.io",
         "java.io API is synchronous and blocks a thread. Make sure to run (potentially) blocking IO operations in a dedicated IO dispatcher.",
         None,
-        topFrameIs(classStartsWith("java.io"))),
-      Problem(
-        "java.net.Socket",
-        "java.net API is synchronous and blocks a thread. Use an asynchronous network API instead like Akka TCP, Akka Stream TCP, or java.nio.channels.SocketChannel",
-        None,
-        anyFrameIs(classStartsWith("java.net.Socket"))))
+        topFrameIs(classStartsWith("java.io"))))
 
     def topFrameIs(topCondition: StackTraceElement => Boolean): StackTraceFilter = _.headOption.exists(topCondition)
     def anyFrameIs(frameCondition: StackTraceElement => Boolean): StackTraceFilter = _.exists(frameCondition)
