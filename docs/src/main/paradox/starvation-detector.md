@@ -51,7 +51,7 @@ systems for longer time spans, so the starvation detector is still likely to exp
 
 @@@ note { title="Java 17" }
 
-When using the Starvation Detector with Java 17 you have to add JVM flag `--add-opens=java.base/java.util.concurrent=ALL-UNNAMED`.
+When using the Starvation Detector with Java 17 or higher you have to add JVM flag `--add-opens=java.base/java.util.concurrent=ALL-UNNAMED`.
 
 @@@
 

@@ -15,6 +15,7 @@ import akka.event.Logging
 import akka.event.LoggingAdapter
 import com.typesafe.config.Config
 
+import java.lang.reflect.InaccessibleObjectException
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadLocalRandom
@@ -232,7 +233,10 @@ object StarvationDetector {
                   s"Stack traces:\n$stacks"
                 }
               case Failure(ex) =>
-                s"[Could not get thread info because ${ex.toString}]"
+                ex match {
+                  case _: InaccessibleObjectException => throw ex //stopping Starvation Detector
+                  case _ => s"[Could not get thread info because ${ex.toString}]"
+                }
             }
 
           log.warning(
@@ -262,6 +266,11 @@ object StarvationDetector {
         while (!hasTerminated()) {
           try checkOnce()
           catch {
+            case e: InaccessibleObjectException =>
+              log.warning(
+                s"Stopping Starvation detector. Reason: ${e.getMessage}" +
+                "Probably you are missing some JVM parameters. See 'note' in https://doc.akka.io/docs/akka-diagnostics/current/starvation-detector.html#configuration")
+              return
             case NonFatal(ex) =>
               log.error(
                 ex,
