@@ -62,7 +62,7 @@ class ConfigCheckerSpec extends AkkaSpec {
 
   // for copy paste into config-checkers.rst
   def printDocWarnings(warnings: immutable.Seq[ConfigWarning]): Unit = {
-    if (false) // change to true when updating documentation, or debugging
+    if (true) // change to true when updating documentation, or debugging
       warnings.foreach { w =>
         val msg = s"| ${ConfigChecker.format(w)} |"
         val line = Vector.fill(msg.length - 2)("-").mkString("+", "", "+")
@@ -451,6 +451,17 @@ class ConfigCheckerSpec extends AkkaSpec {
       paths should not contain "akka.actor.default-dispatcher"
 
       assertDisabled(c, "dispatcher-total-size")
+    }
+
+    "find remote artery disabled" in {
+      val c = ConfigFactory.parseString(
+        """
+          |akka.remote.artery.enabled = false""".stripMargin).withFallback(defaultCluster)
+      val checker = new ConfigChecker(extSys, c, reference)
+
+      val warnings = checker.check().warnings
+      printDocWarnings(warnings)
+      assertCheckerKey(warnings,"remote-artery-not-enabled")
     }
 
     "find suspect remote watch failure detector" in {

@@ -655,7 +655,8 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       checkRemoteWatchFailureDetector() ++
       checkHostname() ++
       checkFrameSize() ++
-      checkRemoteDispatcherSize()
+      checkRemoteDispatcherSize() ++
+      checkArteryNotEnabled
     } else Vector.empty[ConfigWarning]
 
   private def checkRemoteDispatcher(): List[ConfigWarning] =
@@ -737,7 +738,8 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
 
   private def checkHostname(): List[ConfigWarning] =
     ifEnabled("hostname") { checkerKey =>
-      if (config.getBoolean("akka.remote.artery.enabled")) {
+      val path = "akka.remote.artery.enabled"
+      if (config.getBoolean(path)) {
         // artery
         config.getString("akka.remote.artery.canonical.hostname") match {
           case "<getHostAddress>" =>
@@ -758,9 +760,19 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
               s"On this machine `InetAddress.getLocalHost.getHostAddress` is [${InetAddress.getLocalHost.getHostName}].")
           case _ => Nil
         }
-      } else {
-        Nil
-      }
+      } else Nil
+    }
+
+  private def checkArteryNotEnabled(): List[ConfigWarning] =
+    ifEnabled("remote-artery-not-enabled") { checkerKey =>
+      val path = "akka.remote.artery.enabled"
+      if (!config.getBoolean(path)) {
+        warn(
+          checkerKey,
+          path,
+          "Disabling artery means you are using classic remote which is deprecated in 2.7"
+        )
+      } else Nil
     }
 
   private def checkFrameSize(): List[ConfigWarning] = {
