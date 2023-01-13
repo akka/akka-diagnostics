@@ -156,7 +156,8 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
     // Await currently mostly works because it uses the blocking context (it might spawn excessive amounts of extra threads, though)
     // antiPattern("Await", "Await.ready / Await.result blocks a thread")(Try(Await.ready(Promise().future, 100.millis))),
     antiPattern("Socket connect", "java.net API is synchronous and blocks a thread") {
-      new Socket().connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
+      new Socket()
+        .connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
     },
     antiPattern("Socket read", "java.net API is synchronous and blocks a thread") {
       val s = new Socket()

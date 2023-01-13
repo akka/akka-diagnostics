@@ -232,7 +232,11 @@ object StarvationDetector {
                   s"Stack traces:\n$stacks"
                 }
               case Failure(ex) =>
-                s"[Could not get thread info because ${ex.toString}]"
+                ex.getClass.getName match {
+                  case "java.lang.reflect.InaccessibleObjectException" => //FIXME avoid using class name when JDK 8 is not supported
+                    throw InaccessibleObjectException(ex.getMessage, ex.getCause) // stopping Starvation Detector
+                  case _ => s"[Could not get thread info because ${ex.toString}]"
+                }
             }
 
           log.warning(
@@ -262,6 +266,10 @@ object StarvationDetector {
         while (!hasTerminated()) {
           try checkOnce()
           catch {
+            case e: InaccessibleObjectException =>
+              log.warning(s"Stopping Starvation detector. Reason: ${e.getMessage}. \n" +
+              s"Probably you are missing some JVM parameters. See 'note' in https://doc.akka.io/docs/akka-diagnostics/current/starvation-detector.html#configuration")
+              return
             case NonFatal(ex) =>
               log.error(
                 ex,
@@ -421,7 +429,7 @@ object StarvationDetector {
         "java.net",
         "java.net API is synchronous and blocks a thread. Use an asynchronous network API instead like Akka TCP, Akka Stream TCP, or java.nio.channels.SocketChannel.",
         None,
-        topFrameIs(classStartsWith("java.net"))),
+        anyFrameIs(classStartsWith("java.net"))),
       Problem(
         "java.io",
         "java.io API is synchronous and blocks a thread. Make sure to run (potentially) blocking IO operations in a dedicated IO dispatcher.",
@@ -470,3 +478,5 @@ object StarvationDetector {
     ap => threadFactoryField.get(ap).asInstanceOf[MonitorableThreadFactory]
   }
 }
+
+private final case class InaccessibleObjectException(msg: String, ex: Throwable) extends RuntimeException(msg, ex)
