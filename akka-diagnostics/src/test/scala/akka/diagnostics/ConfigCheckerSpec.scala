@@ -62,7 +62,7 @@ class ConfigCheckerSpec extends AkkaSpec {
 
   // for copy paste into config-checkers.rst
   def printDocWarnings(warnings: immutable.Seq[ConfigWarning]): Unit = {
-    if (true) // change to true when updating documentation, or debugging
+    if (false) // change to true when updating documentation, or debugging
       warnings.foreach { w =>
         val msg = s"| ${ConfigChecker.format(w)} |"
         val line = Vector.fill(msg.length - 2)("-").mkString("+", "", "+")
@@ -244,10 +244,31 @@ class ConfigCheckerSpec extends AkkaSpec {
       val checker = new ConfigChecker(extSys, c, reference)
 
       val warnings = checker.check().warnings
+      printDocWarnings(warnings)
       assertPath(warnings, "akka.actor.default-dispatcher")
       assertCheckerKey(warnings, "default-dispatcher-size")
 
       assertDisabled(c, "default-dispatcher-size")
+    }
+
+    "find internal-dispatcher size issues" in {
+      val c = ConfigFactory
+        .parseString("""
+        akka.actor.internal-dispatcher = {
+          fork-join-executor.parallelism-min = 512
+          fork-join-executor.parallelism-max = 512
+        }
+        akka.diagnostics.checker.disabled-checks = ["fork-join-pool-size"]
+      """)
+        .withFallback(reference)
+      val checker = new ConfigChecker(extSys, c, reference)
+
+      val warnings = checker.check().warnings
+      printDocWarnings(warnings)
+      assertPath(warnings, "akka.actor.internal-dispatcher")
+      assertCheckerKey(warnings, "internal-dispatcher-size")
+
+      assertDisabled(c, "internal-dispatcher-size")
     }
 
     "find default-dispatcher type issues" in {
