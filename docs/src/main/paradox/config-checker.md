@@ -258,6 +258,12 @@ There are a few more checks related to the Remote watch failure detector:
  * sane ratio betwen `heartbeat-interval` and `acceptable-heartbeat-pause`
  * sane relation between `heartbeat-interval` and `unreachable-nodes-reaper-interval`
 
+In case you are using Akka Cluster is not recommended modifying the defaults remote watch failure detector. 
+
+```
+Remote watch failure detector shouldn't be changed when cluster is used. Related config properties: [akka.remote.watch-failure-detector.*]. You may disable this check by adding [remote-watch-failure-detector-with-cluster] to configuration string list akka.diagnostics.checker.disabled-checks.
+```
+
 ## More akka-actor checks
 
 ### actor-ref-provider
@@ -307,6 +313,8 @@ You have configured maximum-frame-size to [2097152 bytes]. We recommend against 
 ```
 Don't use too small pool size [1] for the default-remote-dispatcher-size. Related config properties: [akka.remote.default-remote-dispatcher]. You may disable this check by adding [default-remote-dispatcher-size] to configuration string list akka.diagnostics.checker.disabled-checks.
 ```
+
+### 
 
 ## More akka-cluster checks
 

@@ -859,7 +859,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     }
 
   private def checkRemoteWatchFailureDetectorWithCluster(): List[ConfigWarning] =
-    ifEnabled("remote-watch-failure-detector") { checkerKey =>
+    ifEnabled("remote-watch-failure-detector-with-cluster") { checkerKey =>
       val path = "akka.remote.watch-failure-detector"
       val path1 = s"$path.implementation-class"
       val path2 = s"$path.heartbeat-interval"

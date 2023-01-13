@@ -62,7 +62,7 @@ class ConfigCheckerSpec extends AkkaSpec {
 
   // for copy paste into config-checkers.rst
   def printDocWarnings(warnings: immutable.Seq[ConfigWarning]): Unit = {
-    if (false) // change to true when updating documentation, or debugging
+    if (true) // change to true when updating documentation, or debugging
       warnings.foreach { w =>
         val msg = s"| ${ConfigChecker.format(w)} |"
         val line = Vector.fill(msg.length - 2)("-").mkString("+", "", "+")
@@ -70,7 +70,6 @@ class ConfigCheckerSpec extends AkkaSpec {
         println(msg)
         println(line)
       }
-
   }
 
   "The ConfigChecker" must {
@@ -424,12 +423,12 @@ class ConfigCheckerSpec extends AkkaSpec {
       val warnings = checker.check().warnings
 
       printDocWarnings(warnings)
-      assertCheckerKey(warnings, "remote-watch-failure-detector", "power-user-settings")
+      assertCheckerKey(warnings, "remote-watch-failure-detector-with-cluster", "power-user-settings")
       assertPath(
         warnings,
         "akka.remote.watch-failure-detector.*",
         "akka.remote.watch-failure-detector.acceptable-heartbeat-pause")
-      assertDisabled(c, "remote-watch-failure-detector", "power-user-settings")
+      assertDisabled(c, "remote-watch-failure-detector-with-cluster", "power-user-settings")
     }
 
     "find too many dispatchers" in {
