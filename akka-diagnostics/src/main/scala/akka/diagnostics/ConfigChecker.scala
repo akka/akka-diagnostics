@@ -12,6 +12,7 @@ import akka.dispatch.ThreadPoolConfig
 import akka.event.Logging
 import com.typesafe.config._
 import org.apache.commons.lang3.StringUtils
+import java.util.Map.Entry
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable
@@ -647,10 +648,6 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     (provider == "remote" || provider == "akka.remote.RemoteActorRefProvider" || isClusterConfigAvailable)
   }
 
-  private def remoteConfigPath(path: String): String = {
-    path
-  }
-
   private def checkRemote(): Vector[ConfigWarning] =
     if (isRemoteConfigAvailable) {
       Vector.empty[ConfigWarning] ++
@@ -663,7 +660,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
 
   private def checkRemoteDispatcher(): List[ConfigWarning] =
     ifEnabled("remote-dispatcher") { checkerKey =>
-      val path = remoteConfigPath("akka.remote.artery.advanced.use-dispatcher")
+      val path = "akka.remote.artery.advanced.use-dispatcher"
       if (config.getString(path) == defaultDispatcherPath)
         warn(
           checkerKey,
@@ -782,7 +779,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
             "for large payloads.")
         else Nil
       }
-      List(checkFrameSizeAt(remoteConfigPath("akka.remote.artery.advanced.maximum-frame-size"))).flatten
+      List(checkFrameSizeAt("akka.remote.artery.advanced.maximum-frame-size")).flatten
     }
   }
 
@@ -795,6 +792,47 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       else Nil
     }
 
+  private def checkRemoteDeployment(): List[ConfigWarning] =
+    ifEnabled("remote-prefer-cluster") { checkerKey =>
+      val path = "akka.actor.provider"
+      if (config.getString(path) == "remote" || config.getString(path) == "akka.remote.RemoteActorRefProvider")
+        warn(checkerKey, path, "remote is possible, but prefer cluster") ////TODO add better description?
+      else Nil
+    }
+
+  private def checkCreateActorRemotely(): List[ConfigWarning] =
+    ifEnabled("create-actor-remotely") { checkerKey =>
+      val path = """akka.actor.deployment."/...".remote""""
+
+      val isRemoteDeployment = config
+        .getConfig("""akka.actor.deployment""")
+        .withoutPath("default")
+        .entrySet()
+        .toArray()
+        .exists { case x: Entry[String, ConfigValue] =>
+          x.getKey.matches("""^\"\/.*\"\.remote""")
+        } // is of the type "/...".remote
+      if (isRemoteDeployment)
+        warn(
+          checkerKey,
+          path,
+          "Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/docs/akka/current/remoting.html#creating-actors-remotely"
+        ) //TODO add better description?
+      else Nil
+    }
+
+  private def checkClusterWatchFailureDetector(): List[ConfigWarning] =
+    ifEnabled("cluster-watch-failure-detector") { checkerKey =>
+      val path = "akka.remote.watch-failure-detector"
+      if (isClusterConfigAvailable) {
+        warn(
+          checkerKey,
+          path,
+          "Remote watch failure detector shouldn't be used when cluster is used" // TODO explain why?
+        )
+      } else Nil
+    }
+
   private def isClusterConfigAvailable: Boolean = {
     val provider = config.getString("akka.actor.provider")
     // check existence of a property from reference.conf that will unlikely be defined elsewhere
@@ -805,10 +843,12 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   private def checkCluster(): Vector[ConfigWarning] =
     if (isClusterConfigAvailable) {
       Vector.empty[ConfigWarning] ++
-      checkAutoDown() ++
+      checkAutoDown() ++ //TODO move isClusterConfigAvailable to each of the methods below?
       checkClusterFailureDetector() ++
-      checkClusterDispatcher()
-    } else Vector.empty[ConfigWarning]
+      checkClusterDispatcher() ++
+      checkCreateActorRemotely()
+//      checkClusterWatchFailureDetector() //TODO if cluster depends on remote this will warn everytime we use `akka.actor.provider = cluster`?
+    } else Vector.empty[ConfigWarning] ++ checkRemoteDeployment()
 
   private def checkAutoDown(): List[ConfigWarning] =
     ifEnabled("auto-down") { checkerKey =>

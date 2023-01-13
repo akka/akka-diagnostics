@@ -380,6 +380,25 @@ class ConfigCheckerSpec extends AkkaSpec {
       assertDisabled(c, "dispatcher-throughput", "fork-join-pool-size", "dispatcher-total-size")
     }
 
+    "find creating actor remotely while using cluster provider" in {
+      val c = ConfigFactory
+        .parseString("""
+          |akka.actor.deployment./sampleactor.remote = "akka.tcp://sampleActorSystem@127.0.0.1:2553" """.stripMargin)
+        .withFallback(defaultCluster)
+      val checker = new ConfigChecker(extSys, c, reference)
+      val warnings = checker.check().warnings
+
+      assertCheckerKey(warnings,  "create-actor-remotely")
+    }
+
+    "find checkClusterWatchFailureDetector" in {
+      val c = ConfigFactory.load(defaultCluster)
+      val checker = new ConfigChecker(extSys, c, reference)
+      val warnings = checker.check().warnings
+
+      warnings should be(Nil)
+    }
+
     "find too many dispatchers" in {
       val c = (1 to 11)
         .map(n => ConfigFactory.parseString(s"""
@@ -456,8 +475,8 @@ class ConfigCheckerSpec extends AkkaSpec {
           val checker = new ConfigChecker(extSys, c, reference)
           val warnings = checker.check().warnings
           printDocWarnings(warnings)
-          assertCheckerKey(warnings, "remote-watch-failure-detector", "power-user-settings")
-          assertDisabled(c, "remote-watch-failure-detector", "power-user-settings")
+          assertCheckerKey(warnings, "remote-watch-failure-detector", "power-user-settings", "remote-prefer-cluster")
+          assertDisabled(c, "remote-watch-failure-detector", "power-user-settings","remote-prefer-cluster")
         }
       }
     }
@@ -475,9 +494,9 @@ class ConfigCheckerSpec extends AkkaSpec {
 
       val warnings = checker.check().warnings
       printDocWarnings(warnings)
-      assertPath(warnings, "akka.remote.default-remote-dispatcher")
-      assertCheckerKey(warnings, "default-remote-dispatcher-size")
-      assertDisabled(c, "default-remote-dispatcher-size")
+      assertPath(warnings, "akka.remote.default-remote-dispatcher", "akka.actor.provider")
+      assertCheckerKey(warnings, "default-remote-dispatcher-size", "remote-prefer-cluster")
+      assertDisabled(c, "default-remote-dispatcher-size","remote-prefer-cluster")
     }
 
     "recommend against dedicated cluster dispatcher" in {
@@ -775,7 +794,7 @@ class ConfigCheckerSpec extends AkkaSpec {
       val checker = new ConfigChecker(extSys, config, reference)
       val warnings = checker.check().warnings
 
-      warnings should be(Vector.empty)
+      assertCheckerKey(warnings, "remote-prefer-cluster")
     }
 
     "not warn about the dynamic hostnames when artery is used" in {
@@ -801,8 +820,8 @@ class ConfigCheckerSpec extends AkkaSpec {
       val warnings = checker.check().warnings
 
       printDocWarnings(warnings)
-      assertCheckerKey(warnings, "hostname")
-      assertPath(warnings, "akka.remote.artery.canonical.hostname")
+      assertCheckerKey(warnings, "hostname", "remote-prefer-cluster")
+      assertPath(warnings, "akka.remote.artery.canonical.hostname", "akka.actor.provider")
 
       val config2 =
         ConfigFactory.parseString("""akka.remote.artery.canonical.hostname = "<getHostName>" """).withFallback(config1)
@@ -811,8 +830,8 @@ class ConfigCheckerSpec extends AkkaSpec {
       val warnings2 = checker2.check().warnings
 
       printDocWarnings(warnings2)
-      assertCheckerKey(warnings2, "hostname")
-      assertPath(warnings2, "akka.remote.artery.canonical.hostname")
+      assertCheckerKey(warnings2, "hostname", "remote-prefer-cluster")
+      assertPath(warnings2, "akka.remote.artery.canonical.hostname", "akka.actor,provider")
 
     }
 
