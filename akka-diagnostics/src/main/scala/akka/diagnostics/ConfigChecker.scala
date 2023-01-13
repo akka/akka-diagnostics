@@ -854,7 +854,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     }
 
   private def checkClusterWatchFailureDetector(): List[ConfigWarning] =
-    ifEnabled("cluster-watch-failure-detector") { checkerKey =>
+    ifEnabled("remote-watch-failure-detector") { checkerKey =>
       val path = "akka.remote.watch-failure-detector"
       if (isClusterConfigAvailable) {
         warn(
