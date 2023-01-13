@@ -409,7 +409,7 @@ class ConfigCheckerSpec extends AkkaSpec {
       val checker = new ConfigChecker(extSys, c, reference)
       val warnings = checker.check().warnings
 
-      assertCheckerKey(warnings,  "create-actor-remotely")
+      assertCheckerKey(warnings, "create-actor-remotely")
     }
 
     "find checkClusterWatchFailureDetector" in {
@@ -475,14 +475,15 @@ class ConfigCheckerSpec extends AkkaSpec {
     }
 
     "find remote artery disabled" in {
-      val c = ConfigFactory.parseString(
-        """
-          |akka.remote.artery.enabled = false""".stripMargin).withFallback(defaultCluster)
+      val c = ConfigFactory
+        .parseString("""
+          |akka.remote.artery.enabled = false""".stripMargin)
+        .withFallback(defaultCluster)
       val checker = new ConfigChecker(extSys, c, reference)
 
       val warnings = checker.check().warnings
       printDocWarnings(warnings)
-      assertCheckerKey(warnings,"remote-artery-not-enabled")
+      assertCheckerKey(warnings, "remote-artery-not-enabled")
     }
 
     "find suspect remote watch failure detector" in {
@@ -508,7 +509,7 @@ class ConfigCheckerSpec extends AkkaSpec {
           val warnings = checker.check().warnings
           printDocWarnings(warnings)
           assertCheckerKey(warnings, "remote-watch-failure-detector", "power-user-settings", "remote-prefer-cluster")
-          assertDisabled(c, "remote-watch-failure-detector", "power-user-settings","remote-prefer-cluster")
+          assertDisabled(c, "remote-watch-failure-detector", "power-user-settings", "remote-prefer-cluster")
         }
       }
     }
@@ -528,7 +529,7 @@ class ConfigCheckerSpec extends AkkaSpec {
       printDocWarnings(warnings)
       assertPath(warnings, "akka.remote.default-remote-dispatcher", "akka.actor.provider")
       assertCheckerKey(warnings, "default-remote-dispatcher-size", "remote-prefer-cluster")
-      assertDisabled(c, "default-remote-dispatcher-size","remote-prefer-cluster")
+      assertDisabled(c, "default-remote-dispatcher-size", "remote-prefer-cluster")
     }
 
     "recommend against dedicated cluster dispatcher" in {

@@ -569,12 +569,12 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
           checkerKey,
           path,
           s"Don't use too large pool size [$size] for the internal-dispatcher. " +
-            "Note that the pool size is calculated by ceil(available processors * parallelism-factor), " +
-            "and then bounded by the parallelism-min and parallelism-max values. " +
-            s"This machine has [$availableProcessors] available processors. " +
-            "If you use a large pool size here because of blocking execution you should instead use " +
-            "a dedicated dispatcher to manage blocking tasks/actors. Blocking execution shouldn't " +
-            "run on the internal-dispatcher because that may starve other tasks.")
+          "Note that the pool size is calculated by ceil(available processors * parallelism-factor), " +
+          "and then bounded by the parallelism-min and parallelism-max values. " +
+          s"This machine has [$availableProcessors] available processors. " +
+          "If you use a large pool size here because of blocking execution you should instead use " +
+          "a dedicated dispatcher to manage blocking tasks/actors. Blocking execution shouldn't " +
+          "run on the internal-dispatcher because that may starve other tasks.")
       else if (size <= 3)
         warn(checkerKey, path, s"Don't use too small pool size [$size] for the internal-dispatcher. ")
       else Nil
@@ -791,11 +791,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     ifEnabled("remote-artery-not-enabled") { checkerKey =>
       val path = "akka.remote.artery.enabled"
       if (!config.getBoolean(path)) {
-        warn(
-          checkerKey,
-          path,
-          "Disabling artery means you are using classic remote which is deprecated in 2.7"
-        )
+        warn(checkerKey, path, "Disabling artery means you are using classic remote which is deprecated in 2.7")
       } else Nil
     }
 
