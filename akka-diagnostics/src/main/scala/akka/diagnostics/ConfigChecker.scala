@@ -12,7 +12,6 @@ import akka.dispatch.ThreadPoolConfig
 import akka.event.Logging
 import com.typesafe.config._
 import org.apache.commons.lang3.StringUtils
-import java.util.Map.Entry
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable
@@ -680,7 +679,8 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       checkHostname() ++
       checkFrameSize() ++
       checkRemoteDispatcherSize() ++
-      checkArteryNotEnabled
+      checkArteryNotEnabled ++
+      checkRemoteWatchFailureDetectorWithCluster() //TODO if cluster depends on remote this will warn everytime we use `akka.actor.provider = cluster`?
     } else Vector.empty[ConfigWarning]
 
   private def checkRemoteDispatcher(): List[ConfigWarning] =
@@ -788,10 +788,13 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     }
 
   private def checkArteryNotEnabled(): List[ConfigWarning] =
-    ifEnabled("remote-artery-not-enabled") { checkerKey =>
+    ifEnabled("remote-artery-disabled") { checkerKey =>
       val path = "akka.remote.artery.enabled"
       if (!config.getBoolean(path)) {
-        warn(checkerKey, path, "Disabling artery means you are using classic remote which is deprecated in 2.7")
+        warn(
+          checkerKey,
+          path,
+          "Classic remoting is deprecated since Akka 2.6.0 and will be removed in Akka 2.8.0. Use Artery instead.")
       } else Nil
     }
 
@@ -824,11 +827,14 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       else Nil
     }
 
-  private def checkRemoteDeployment(): List[ConfigWarning] =
+  private def checkPreferClusterThanRemote(): List[ConfigWarning] =
     ifEnabled("remote-prefer-cluster") { checkerKey =>
       val path = "akka.actor.provider"
       if (config.getString(path) == "remote" || config.getString(path) == "akka.remote.RemoteActorRefProvider")
-        warn(checkerKey, path, "remote is possible, but prefer cluster") ////TODO add better description?
+        warn(
+          checkerKey,
+          path,
+          "Some features, such as remote watch, will be unsafe when using remote without Akka Cluster.")
       else Nil
     }
 
@@ -840,10 +846,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
         .getConfig("""akka.actor.deployment""")
         .withoutPath("default")
         .entrySet()
-        .toArray()
-        .exists { case x: Entry[String, ConfigValue] =>
-          x.getKey.matches("""^\"\/.*\"\.remote""")
-        } // is of the type "/...".remote
+        .iterator()
+        .asScala
+        .exists(_.getKey.matches("""^\"\/.*\"\.remote""")) // is of the type "/...".remote
       if (isRemoteDeployment)
         warn(
           checkerKey,
@@ -853,14 +858,31 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       else Nil
     }
 
-  private def checkClusterWatchFailureDetector(): List[ConfigWarning] =
+  private def checkRemoteWatchFailureDetectorWithCluster(): List[ConfigWarning] =
     ifEnabled("remote-watch-failure-detector") { checkerKey =>
       val path = "akka.remote.watch-failure-detector"
-      if (isClusterConfigAvailable) {
+      val path1 = s"$path.implementation-class"
+      val path2 = s"$path.heartbeat-interval"
+      val path3 = s"$path.threshold"
+      val path4 = s"$path.max-sample-size"
+      val path5 = s"$path.min-std-deviation"
+      val path6 = s"$path.acceptable-heartbeat-pause"
+      val path7 = s"$path.unreachable-nodes-reaper-interval"
+      val path8 = s"$path.expected-response-after"
+      val changed = config.getValue(path1) != reference.getValue(path1) ||
+        config.getValue(path2) != reference.getValue(path2) ||
+        config.getValue(path3) != reference.getValue(path3) ||
+        config.getValue(path4) != reference.getValue(path4) ||
+        config.getValue(path5) != reference.getValue(path5) ||
+        config.getValue(path6) != reference.getValue(path6) ||
+        config.getValue(path7) != reference.getValue(path7) ||
+        config.getValue(path8) != reference.getValue(path8)
+
+      if (isClusterConfigAvailable && changed) {
         warn(
           checkerKey,
-          path,
-          "Remote watch failure detector shouldn't be used when cluster is used" // TODO explain why?
+          s"$path.*",
+          "Remote watch failure detector shouldn't be changed when cluster is used." // TODO explain why?
         )
       } else Nil
     }
@@ -879,8 +901,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       checkClusterFailureDetector() ++
       checkClusterDispatcher() ++
       checkCreateActorRemotely()
-//      checkClusterWatchFailureDetector() //TODO if cluster depends on remote this will warn everytime we use `akka.actor.provider = cluster`?
-    } else Vector.empty[ConfigWarning] ++ checkRemoteDeployment()
+    } else Vector.empty[ConfigWarning] ++ checkPreferClusterThanRemote()
 
   private def checkAutoDown(): List[ConfigWarning] =
     ifEnabled("auto-down") { checkerKey =>

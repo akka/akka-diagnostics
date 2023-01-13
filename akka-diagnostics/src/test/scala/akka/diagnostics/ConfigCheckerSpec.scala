@@ -409,15 +409,27 @@ class ConfigCheckerSpec extends AkkaSpec {
       val checker = new ConfigChecker(extSys, c, reference)
       val warnings = checker.check().warnings
 
+      printDocWarnings(warnings)
       assertCheckerKey(warnings, "create-actor-remotely")
+      assertPath(warnings, """akka.actor.deployment."/...".remote"""")
+      assertDisabled(c, "create-actor-remotely")
     }
 
-    "find checkClusterWatchFailureDetector" in {
-      val c = ConfigFactory.load(defaultCluster)
+    "find akka.remote.watch-failure-detector.* hasn't been changed when akka.actor.provider=cluster" in {
+      val c = ConfigFactory
+        .parseString("""
+          |akka.remote.watch-failure-detector.acceptable-heartbeat-pause = 20s""".stripMargin)
+        .withFallback(defaultCluster)
       val checker = new ConfigChecker(extSys, c, reference)
       val warnings = checker.check().warnings
 
-      warnings should be(Nil)
+      printDocWarnings(warnings)
+      assertCheckerKey(warnings, "remote-watch-failure-detector", "power-user-settings")
+      assertPath(
+        warnings,
+        "akka.remote.watch-failure-detector.*",
+        "akka.remote.watch-failure-detector.acceptable-heartbeat-pause")
+      assertDisabled(c, "remote-watch-failure-detector", "power-user-settings")
     }
 
     "find too many dispatchers" in {
@@ -483,7 +495,9 @@ class ConfigCheckerSpec extends AkkaSpec {
 
       val warnings = checker.check().warnings
       printDocWarnings(warnings)
-      assertCheckerKey(warnings, "remote-artery-not-enabled")
+      assertCheckerKey(warnings, "remote-artery-disabled")
+      assertPath(warnings, "akka.remote.artery.enabled")
+      assertDisabled(c, "remote-artery-disabled")
     }
 
     "find suspect remote watch failure detector" in {
@@ -864,7 +878,8 @@ class ConfigCheckerSpec extends AkkaSpec {
 
       printDocWarnings(warnings2)
       assertCheckerKey(warnings2, "hostname", "remote-prefer-cluster")
-      assertPath(warnings2, "akka.remote.artery.canonical.hostname", "akka.actor,provider")
+      assertPath(warnings2, "akka.remote.artery.canonical.hostname", "akka.actor.provider")
+      assertDisabled(config2, "hostname", "remote-prefer-cluster")
 
     }
 
