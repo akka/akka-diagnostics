@@ -830,7 +830,7 @@ class ConfigCheckerSpec extends AkkaSpec {
       printDocWarnings(warnings)
       assertCheckerKey(warnings, "remote-prefer-cluster")
       assertPath(warnings, "akka.actor.provider")
-      assertDisabled(c,  "remote-prefer-cluster")
+      assertDisabled(c, "remote-prefer-cluster")
     }
 
     "not warn about the dynamic hostnames when artery is used" in {
