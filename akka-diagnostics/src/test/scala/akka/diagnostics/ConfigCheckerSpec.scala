@@ -62,7 +62,7 @@ class ConfigCheckerSpec extends AkkaSpec {
 
   // for copy paste into config-checkers.rst
   def printDocWarnings(warnings: immutable.Seq[ConfigWarning]): Unit = {
-    if (true) // change to true when updating documentation, or debugging
+    if (false) // change to true when updating documentation, or debugging
       warnings.foreach { w =>
         val msg = s"| ${ConfigChecker.format(w)} |"
         val line = Vector.fill(msg.length - 2)("-").mkString("+", "", "+")
