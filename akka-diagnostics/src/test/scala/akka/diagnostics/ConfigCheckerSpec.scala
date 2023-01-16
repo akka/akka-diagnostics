@@ -253,10 +253,12 @@ class ConfigCheckerSpec extends AkkaSpec {
     "find internal-dispatcher size issues" in {
       val c = ConfigFactory
         .parseString("""
+        #//#internal-dispatcher-large
         akka.actor.internal-dispatcher = {
           fork-join-executor.parallelism-min = 512
           fork-join-executor.parallelism-max = 512
         }
+        #//#internal-dispatcher-large
         akka.diagnostics.checker.disabled-checks = ["fork-join-pool-size"]
       """)
         .withFallback(reference)
@@ -820,27 +822,15 @@ class ConfigCheckerSpec extends AkkaSpec {
     }
 
     "not warn about classic remoting settings missing when artery is used" in {
-      val config = ConfigFactory
-        .parseString("""
-       akka {
-         actor {
-           provider = remote
-         }
-         remote {
-           artery {
-             enabled = on
-             canonical.hostname = "127.0.0.1"
-             canonical.port = 25252
-           }
-         }
-       }
-      """)
-        .withFallback(reference)
+      val c = ConfigFactory.load(defaultRemote).withFallback(reference)
 
-      val checker = new ConfigChecker(extSys, config, reference)
+      val checker = new ConfigChecker(extSys, c, reference)
       val warnings = checker.check().warnings
 
+      printDocWarnings(warnings)
       assertCheckerKey(warnings, "remote-prefer-cluster")
+      assertPath(warnings, "akka.actor.provider")
+      assertDisabled(c,  "remote-prefer-cluster")
     }
 
     "not warn about the dynamic hostnames when artery is used" in {

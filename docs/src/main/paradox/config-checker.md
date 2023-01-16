@@ -190,6 +190,14 @@ You have a total of [1000] threads in all configured dispatchers. That many thre
 Don't use too large pool size [100] for fork-join pool. Note that the pool size is calculated by ceil(available processors * parallelism-factor), and then bounded by the parallelism-min and parallelism-max values. This machine has [8] available processors. If you use a large pool size here because of blocking execution you should use a thread-pool-executor instead. Related config properties: [my-fjp]. You may disable this check by adding [fork-join-pool-size] to configuration string list akka.diagnostics.checker.disabled-checks.
 ```
 
+### Internal dispatcher size
+
+@@snip [ConfigCheckerSpec.scala](/akka-diagnostics/src/test/scala/akka/diagnostics/ConfigCheckerSpec.scala) { #internal-dispatcher-large }
+
+```
+Don't use too large pool size [512] for the internal-dispatcher. Note that the pool size is calculated by ceil(available processors * parallelism-factor), and then bounded by the parallelism-min and parallelism-max values. This machine has [12] available processors. If you use a large pool size here because of blocking execution you should instead use a dedicated dispatcher to manage blocking tasks/actors. Blocking execution shouldn't run on the internal-dispatcher because that may starve other tasks. Related config properties: [akka.actor.internal-dispatcher]. You may disable this check by adding [internal-dispatcher-size] to configuration string list akka.diagnostics.checker.disabled-checks.
+```
+
 ## Failure detectors
 
 There are 3 different failure detectors that monitor remote connections.
@@ -314,7 +322,23 @@ You have configured maximum-frame-size to [2097152 bytes]. We recommend against 
 Don't use too small pool size [1] for the default-remote-dispatcher-size. Related config properties: [akka.remote.default-remote-dispatcher]. You may disable this check by adding [default-remote-dispatcher-size] to configuration string list akka.diagnostics.checker.disabled-checks.
 ```
 
-### 
+### create-actor-remotely 
+
+```
+Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/docs/akka/current/remoting.html#creating-actors-remotely Related config properties: [akka.actor.deployment."/...".remote"]. You may disable this check by adding [create-actor-remotely] to configuration string list akka.diagnostics.checker.disabled-checks.
+```
+
+### remote-artery-disabled
+
+```
+Classic remoting is deprecated since Akka 2.6.0 and will be removed in Akka 2.8.0. Use Artery instead. Related config properties: [akka.remote.artery.enabled = false]. Corresponding default values: [akka.remote.artery.enabled = on]. You may disable this check by adding [remote-artery-disabled] to configuration string list akka.diagnostics.checker.disabled-checks.
+```
+
+### remote-prefer-cluster
+
+```
+Some features, such as remote watch, will be unsafe when using remote without Akka Cluster. Related config properties: [akka.actor.provider = akka.remote.RemoteActorRefProvider]. Corresponding default values: [akka.actor.provider = local]. You may disable this check by adding [remote-prefer-cluster] to configuration string list akka.diagnostics.checker.disabled-checks. 
+```
 
 ## More akka-cluster checks
 
