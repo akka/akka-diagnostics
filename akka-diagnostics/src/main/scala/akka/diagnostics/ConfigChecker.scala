@@ -680,7 +680,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       checkFrameSize() ++
       checkRemoteDispatcherSize() ++
       checkArteryNotEnabled ++
-      checkRemoteWatchFailureDetectorWithCluster() //TODO if cluster depends on remote this will warn everytime we use `akka.actor.provider = cluster`?
+      checkRemoteWatchFailureDetectorWithCluster()
     } else Vector.empty[ConfigWarning]
 
   private def checkRemoteDispatcher(): List[ConfigWarning] =
@@ -854,7 +854,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
           checkerKey,
           path,
           "Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/docs/akka/current/remoting.html#creating-actors-remotely"
-        ) //TODO add better description?
+        )
       else Nil
     }
 
@@ -882,7 +882,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
         warn(
           checkerKey,
           s"$path.*",
-          "Remote watch failure detector shouldn't be changed when cluster is used." // TODO explain why?
+          "Remote watch failure detector shouldn't be changed when cluster is used."
         )
       } else Nil
     }
@@ -897,7 +897,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   private def checkCluster(): Vector[ConfigWarning] =
     if (isClusterConfigAvailable) {
       Vector.empty[ConfigWarning] ++
-      checkAutoDown() ++ //TODO move isClusterConfigAvailable to each of the methods below?
+      checkAutoDown() ++
       checkClusterFailureDetector() ++
       checkClusterDispatcher() ++
       checkCreateActorRemotely()

@@ -516,7 +516,7 @@ class ConfigCheckerSpec extends AkkaSpec {
           .withFallback(
             ConfigFactory.parseString("""akka.diagnostics.checker.confirmed-power-user-settings =
             ["akka.remote.watch-failure-detector.unreachable-nodes-reaper-interval"]""")
-          ) //TODO Q why is this needed if we are not setting it?
+          )
           .withFallback(defaultRemote))
       configs.zipWithIndex.foreach { case (c, i) =>
         withClue(s"problem with config #${i + 1}") {
