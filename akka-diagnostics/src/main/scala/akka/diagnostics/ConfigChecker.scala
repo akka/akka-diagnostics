@@ -853,8 +853,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
         warn(
           checkerKey,
           path,
-          "Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/docs/akka/current/remoting.html#creating-actors-remotely"
-        )
+          "Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/docs/akka/current/remoting.html#creating-actors-remotely")
       else Nil
     }
 
@@ -879,11 +878,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
         config.getValue(path8) != reference.getValue(path8)
 
       if (isClusterConfigAvailable && changed) {
-        warn(
-          checkerKey,
-          s"$path.*",
-          "Remote watch failure detector shouldn't be changed when cluster is used."
-        )
+        warn(checkerKey, s"$path.*", "Remote watch failure detector shouldn't be changed when cluster is used.")
       } else Nil
     }
 

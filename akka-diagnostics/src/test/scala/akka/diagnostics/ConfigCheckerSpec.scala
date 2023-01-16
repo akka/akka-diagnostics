@@ -513,10 +513,8 @@ class ConfigCheckerSpec extends AkkaSpec {
       val configs = configStrings.map(c =>
         ConfigFactory
           .parseString(c)
-          .withFallback(
-            ConfigFactory.parseString("""akka.diagnostics.checker.confirmed-power-user-settings =
-            ["akka.remote.watch-failure-detector.unreachable-nodes-reaper-interval"]""")
-          )
+          .withFallback(ConfigFactory.parseString("""akka.diagnostics.checker.confirmed-power-user-settings =
+            ["akka.remote.watch-failure-detector.unreachable-nodes-reaper-interval"]"""))
           .withFallback(defaultRemote))
       configs.zipWithIndex.foreach { case (c, i) =>
         withClue(s"problem with config #${i + 1}") {
