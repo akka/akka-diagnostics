@@ -250,6 +250,23 @@ class ConfigCheckerSpec extends AkkaSpec {
       assertDisabled(c, "default-dispatcher-size")
     }
 
+    "check internal-dispatcher as default-dispatcher is find" in {
+      val c = ConfigFactory
+        .parseString("""
+          |akka.actor.default-dispatcher = {
+          |  type = "Dispatcher"
+          |  # ...
+          |  }
+          |akka.actor.internal-dispatcher = ${akka.actor.default-dispatcher}  """.stripMargin)
+        .resolve()
+        .withFallback(reference)
+
+      val checker = new ConfigChecker(extSys, c, reference)
+      val warnings = checker.check().warnings
+
+      warnings should be(Nil)
+    }
+
     "find internal-dispatcher size issues" in {
       val c = ConfigFactory
         .parseString("""

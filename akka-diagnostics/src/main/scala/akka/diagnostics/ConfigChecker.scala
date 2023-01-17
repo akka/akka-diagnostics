@@ -563,7 +563,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       val size = dispatcherPoolSize(config.getConfig(path))
 
       val availableProcessors = Runtime.getRuntime.availableProcessors
-      if (size > 64 && size > availableProcessors)
+      if (config.getConfig(internalDispatcherPath) == config.getConfig(defaultDispatcherPath))
+        Nil
+      else if (size > 64 && size > availableProcessors)
         warn(
           checkerKey,
           path,
@@ -572,8 +574,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
           "and then bounded by the parallelism-min and parallelism-max values. " +
           s"This machine has [$availableProcessors] available processors. " +
           "If you use a large pool size here because of blocking execution you should instead use " +
-          "a dedicated dispatcher to manage blocking tasks/actors. Blocking execution shouldn't " +
-          "run on the internal-dispatcher because that may starve other tasks.")
+          "a dedicated dispatcher to manage blocking tasks/actors. You should better not use the internal-dispatcher")
       else if (size <= 3)
         warn(checkerKey, path, s"Don't use too small pool size [$size] for the internal-dispatcher. ")
       else Nil
@@ -678,9 +679,10 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       checkRemoteWatchFailureDetector() ++
       checkHostname() ++
       checkFrameSize() ++
+      checkCreateActorRemotely() ++
+      checkPreferClusterToRemote() ++
       checkRemoteDispatcherSize() ++
-      checkArteryNotEnabled ++
-      checkRemoteWatchFailureDetectorWithCluster()
+      checkArteryNotEnabled
     } else Vector.empty[ConfigWarning]
 
   private def checkRemoteDispatcher(): List[ConfigWarning] =
@@ -877,7 +879,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
         config.getValue(path7) != reference.getValue(path7) ||
         config.getValue(path8) != reference.getValue(path8)
 
-      if (isClusterConfigAvailable && changed) {
+      if (changed) {
         warn(checkerKey, s"$path.*", "Remote watch failure detector shouldn't be changed when cluster is used.")
       } else Nil
     }
@@ -895,8 +897,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       checkAutoDown() ++
       checkClusterFailureDetector() ++
       checkClusterDispatcher() ++
-      checkCreateActorRemotely()
-    } else Vector.empty[ConfigWarning] ++ checkPreferClusterThanRemote()
+      checkCreateActorRemotely() ++
+      checkRemoteWatchFailureDetectorWithCluster()
+    } else Vector.empty[ConfigWarning]
 
   private def checkAutoDown(): List[ConfigWarning] =
     ifEnabled("auto-down") { checkerKey =>
