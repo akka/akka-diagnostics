@@ -26,7 +26,7 @@ import akka.diagnostics.StarvationDetector.StarvationDetectorThread
 import scala.concurrent.ExecutionContext
 
 class StarvationDetectorSpec extends AkkaSpec(s"""
-      akka.diagnostics.starvation-detector.check-interval              = 50ms # check more often
+      akka.diagnostics.starvation-detector.check-interval              = 100ms # check more often
       akka.diagnostics.starvation-detector.initial-delay               = 0     # no initial delay
       akka.diagnostics.starvation-detector.max-delay-warning-threshold = 30ms  # make check tighter
       akka.diagnostics.starvation-detector.warning-interval            = 10s   # must be longer than one antipattern test, so it is reported only once
