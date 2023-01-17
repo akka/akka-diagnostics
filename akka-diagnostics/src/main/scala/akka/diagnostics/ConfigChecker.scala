@@ -827,7 +827,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       else Nil
     }
 
-  private def checkPreferClusterThanRemote(): List[ConfigWarning] =
+  private def checkPreferClusterToRemote(): List[ConfigWarning] =
     ifEnabled("remote-prefer-cluster") { checkerKey =>
       val path = "akka.actor.provider"
       if (config.getString(path) == "remote" || config.getString(path) == "akka.remote.RemoteActorRefProvider")
