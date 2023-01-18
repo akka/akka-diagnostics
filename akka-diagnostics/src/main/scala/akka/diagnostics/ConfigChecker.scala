@@ -480,6 +480,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     checkProvider() ++
     checkJvmExitOnFatalError() ++
     checkDefaultDispatcherSize() ++
+    checkInternalDispatcherSize ++
     checkDefaultDispatcherType() ++
     checkDispatcherThroughput(defaultDispatcherPath, config.getConfig(defaultDispatcherPath))
   }
@@ -552,6 +553,30 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
           "run on the default-dispatcher because that may starve other tasks.")
       else if (size <= 3)
         warn(checkerKey, path, s"Don't use too small pool size [$size] for the default-dispatcher. ")
+      else Nil
+    }
+
+  private def checkInternalDispatcherSize(): List[ConfigWarning] =
+    ifEnabled("internal-dispatcher-size") { checkerKey =>
+      val path = internalDispatcherPath
+
+      val size = dispatcherPoolSize(config.getConfig(path))
+
+      val availableProcessors = Runtime.getRuntime.availableProcessors
+      if (config.getConfig(internalDispatcherPath) == config.getConfig(defaultDispatcherPath))
+        Nil
+      else if (size > 64 && size > availableProcessors)
+        warn(
+          checkerKey,
+          path,
+          s"Don't use too large pool size [$size] for the internal-dispatcher. " +
+          "Note that the pool size is calculated by ceil(available processors * parallelism-factor), " +
+          "and then bounded by the parallelism-min and parallelism-max values. " +
+          s"This machine has [$availableProcessors] available processors. " +
+          "If you use a large pool size here because of blocking execution you should instead use " +
+          "a dedicated dispatcher to manage blocking tasks/actors. You should better not use the internal-dispatcher")
+      else if (size <= 3)
+        warn(checkerKey, path, s"Don't use too small pool size [$size] for the internal-dispatcher. ")
       else Nil
     }
 
@@ -647,10 +672,6 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     (provider == "remote" || provider == "akka.remote.RemoteActorRefProvider" || isClusterConfigAvailable)
   }
 
-  private def remoteConfigPath(path: String): String = {
-    path
-  }
-
   private def checkRemote(): Vector[ConfigWarning] =
     if (isRemoteConfigAvailable) {
       Vector.empty[ConfigWarning] ++
@@ -658,12 +679,15 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       checkRemoteWatchFailureDetector() ++
       checkHostname() ++
       checkFrameSize() ++
-      checkRemoteDispatcherSize()
+      checkCreateActorRemotely() ++
+      checkPreferClusterToRemote() ++
+      checkRemoteDispatcherSize() ++
+      checkArteryNotEnabled
     } else Vector.empty[ConfigWarning]
 
   private def checkRemoteDispatcher(): List[ConfigWarning] =
     ifEnabled("remote-dispatcher") { checkerKey =>
-      val path = remoteConfigPath("akka.remote.artery.advanced.use-dispatcher")
+      val path = "akka.remote.artery.advanced.use-dispatcher"
       if (config.getString(path) == defaultDispatcherPath)
         warn(
           checkerKey,
@@ -740,7 +764,8 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
 
   private def checkHostname(): List[ConfigWarning] =
     ifEnabled("hostname") { checkerKey =>
-      if (config.getBoolean("akka.remote.artery.enabled")) {
+      val path = "akka.remote.artery.enabled"
+      if (config.getBoolean(path)) {
         // artery
         config.getString("akka.remote.artery.canonical.hostname") match {
           case "<getHostAddress>" =>
@@ -761,9 +786,18 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
               s"On this machine `InetAddress.getLocalHost.getHostAddress` is [${InetAddress.getLocalHost.getHostName}].")
           case _ => Nil
         }
-      } else {
-        Nil
-      }
+      } else Nil
+    }
+
+  private def checkArteryNotEnabled(): List[ConfigWarning] =
+    ifEnabled("remote-artery-disabled") { checkerKey =>
+      val path = "akka.remote.artery.enabled"
+      if (!config.getBoolean(path)) {
+        warn(
+          checkerKey,
+          path,
+          "Classic remoting is deprecated since Akka 2.6.0 and will be removed in Akka 2.8.0. Use Artery instead.")
+      } else Nil
     }
 
   private def checkFrameSize(): List[ConfigWarning] = {
@@ -782,7 +816,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
             "for large payloads.")
         else Nil
       }
-      List(checkFrameSizeAt(remoteConfigPath("akka.remote.artery.advanced.maximum-frame-size"))).flatten
+      List(checkFrameSizeAt("akka.remote.artery.advanced.maximum-frame-size")).flatten
     }
   }
 
@@ -793,6 +827,61 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       if (size < 2)
         warn(checkerKey, path, s"Don't use too small pool size [$size] for the default-remote-dispatcher-size.")
       else Nil
+    }
+
+  private def checkPreferClusterToRemote(): List[ConfigWarning] =
+    ifEnabled("remote-prefer-cluster") { checkerKey =>
+      val path = "akka.actor.provider"
+      if (config.getString(path) == "remote" || config.getString(path) == "akka.remote.RemoteActorRefProvider")
+        warn(
+          checkerKey,
+          path,
+          "Some features, such as remote watch, will be unsafe when using remote without Akka Cluster.")
+      else Nil
+    }
+
+  private def checkCreateActorRemotely(): List[ConfigWarning] =
+    ifEnabled("create-actor-remotely") { checkerKey =>
+      val path = """akka.actor.deployment."/...".remote""""
+
+      val isRemoteDeployment = config
+        .getConfig("""akka.actor.deployment""")
+        .withoutPath("default")
+        .entrySet()
+        .iterator()
+        .asScala
+        .exists(_.getKey.matches("""^\"\/.*\"\.remote""")) // is of the type "/...".remote
+      if (isRemoteDeployment)
+        warn(
+          checkerKey,
+          path,
+          "Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/docs/akka/current/remoting.html#creating-actors-remotely")
+      else Nil
+    }
+
+  private def checkRemoteWatchFailureDetectorWithCluster(): List[ConfigWarning] =
+    ifEnabled("remote-watch-failure-detector-with-cluster") { checkerKey =>
+      val path = "akka.remote.watch-failure-detector"
+      val path1 = s"$path.implementation-class"
+      val path2 = s"$path.heartbeat-interval"
+      val path3 = s"$path.threshold"
+      val path4 = s"$path.max-sample-size"
+      val path5 = s"$path.min-std-deviation"
+      val path6 = s"$path.acceptable-heartbeat-pause"
+      val path7 = s"$path.unreachable-nodes-reaper-interval"
+      val path8 = s"$path.expected-response-after"
+      val changed = config.getValue(path1) != reference.getValue(path1) ||
+        config.getValue(path2) != reference.getValue(path2) ||
+        config.getValue(path3) != reference.getValue(path3) ||
+        config.getValue(path4) != reference.getValue(path4) ||
+        config.getValue(path5) != reference.getValue(path5) ||
+        config.getValue(path6) != reference.getValue(path6) ||
+        config.getValue(path7) != reference.getValue(path7) ||
+        config.getValue(path8) != reference.getValue(path8)
+
+      if (changed) {
+        warn(checkerKey, s"$path.*", "Remote watch failure detector shouldn't be changed when cluster is used.")
+      } else Nil
     }
 
   private def isClusterConfigAvailable: Boolean = {
@@ -807,7 +896,9 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       Vector.empty[ConfigWarning] ++
       checkAutoDown() ++
       checkClusterFailureDetector() ++
-      checkClusterDispatcher()
+      checkClusterDispatcher() ++
+      checkCreateActorRemotely() ++
+      checkRemoteWatchFailureDetectorWithCluster()
     } else Vector.empty[ConfigWarning]
 
   private def checkAutoDown(): List[ConfigWarning] =
