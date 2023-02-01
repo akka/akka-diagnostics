@@ -74,6 +74,10 @@ object ConfigChecker {
   def reportIssues(system: ExtendedActorSystem): Unit = {
     import Internal._
 
+    val log = Logging.getLogger(system, classOf[ConfigChecker].getName)
+    log.info(
+      "Starting ConfigChecker. Looking for potential issues in your configuration. Issues found will be logged as warnings")
+
     def runChecks(): ValidationResults = {
       val checker = new ConfigChecker(system)
       val result = checker.check()
@@ -84,7 +88,6 @@ object ConfigChecker {
     def logWarnings(result: ValidationResults): Unit =
       if (result.warnings.nonEmpty) {
         val formatted = result.warnings.map(w => recommendation(format(w)))
-        val log = Logging.getLogger(system, classOf[ConfigChecker].getName)
         formatted.foreach(log.warning)
       }
 
