@@ -8,6 +8,7 @@ object Dependencies {
   val Scala213 = "2.13.10"
   val AkkaVersion = "2.7.0"
   val AkkaVersionInDocs = AkkaVersion.take(3)
+  val AkkaHttpVersionInDocs = "10.4.0"
   val buildScalaVersion = System.getProperty("akka.build.scalaVersion", Scala213)
   val commonsLang = "org.apache.commons" % "commons-lang3" % "3.12.0" // ApacheV2
 

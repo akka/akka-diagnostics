@@ -101,6 +101,8 @@ lazy val docs = (project in file("docs"))
       else version.value}",
       "extref.akka.base_url" -> s"https://doc.akka.io/docs/akka/${Dependencies.AkkaVersionInDocs}/%s",
       "scaladoc.akka.base_url" -> s"https://doc.akka.io/api/akka/${Dependencies.AkkaVersionInDocs}",
+      "extref.akka-http.base_url" -> s"https://doc.akka.io/docs/akka-http/${Dependencies.AkkaHttpVersionInDocs}/%s",
+      "scaladoc.akka.http.base_url" -> s"https://doc.akka.io/api/akka-http/${Dependencies.AkkaHttpVersionInDocs}/",
       "snip.github_link" -> "false"),
     ApidocPlugin.autoImport.apidocRootPackage := "akka",
     apidocRootPackage := "akka",
