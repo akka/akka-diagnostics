@@ -75,7 +75,8 @@ object ConfigChecker {
     import Internal._
 
     val log = Logging.getLogger(system, classOf[ConfigChecker].getName)
-    log.info("Starting ConfigChecker. Looking for potential issues in your configuration. Issues found will be logged as warnings")
+    log.info(
+      "Starting ConfigChecker. Looking for potential issues in your configuration. Issues found will be logged as warnings")
 
     def runChecks(): ValidationResults = {
       val checker = new ConfigChecker(system)
