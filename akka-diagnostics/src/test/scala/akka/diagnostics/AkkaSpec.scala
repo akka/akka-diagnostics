@@ -4,25 +4,25 @@
 
 package akka.diagnostics
 
+import java.lang.reflect.Modifier
+
+import scala.concurrent.Future
+import scala.concurrent.duration._
+
 import akka.actor.ActorSystem
 import akka.dispatch.Dispatchers
 import akka.event.Logging
 import akka.event.LoggingAdapter
-import akka.testkit.TestEvent.Mute
 import akka.testkit.DeadLettersFilter
+import akka.testkit.TestEvent.Mute
 import akka.testkit.TestKit
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 import org.scalactic.CanEqual
-import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.BeforeAndAfterAll
-import org.scalatest.Matchers
-import org.scalatest.WordSpecLike
-
-import java.lang.reflect.Modifier
-import scala.concurrent.Future
-import scala.concurrent.duration._
-import scala.language.postfixOps
+import org.scalatest.concurrent.ScalaFutures
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpecLike
 
 object AkkaSpec {
   val testConf: Config = ConfigFactory.parseString("""
@@ -94,12 +94,12 @@ object AkkaSpec {
 
 abstract class AkkaSpec(_system: ActorSystem)
     extends TestKit(_system)
-    with WordSpecLike
+    with AnyWordSpecLike
     with Matchers
     with BeforeAndAfterAll
     with ScalaFutures {
 
-  implicit val patience = PatienceConfig(testKitSettings.DefaultTimeout.duration)
+  implicit val patience: PatienceConfig = PatienceConfig(testKitSettings.DefaultTimeout.duration)
 
   def this(config: Config) = this(
     ActorSystem(
@@ -112,7 +112,7 @@ abstract class AkkaSpec(_system: ActorSystem)
 
   def this() = this(ActorSystem(AkkaSpec.testNameFromCallStack(classOf[AkkaSpec]), AkkaSpec.testConf))
 
-  val log: LoggingAdapter = Logging(system, this.getClass)
+  val log: LoggingAdapter = Logging(system, Logging.simpleName(this))
 
   override val invokeBeforeAllAndAfterAllEvenIfNoTestsAreExpected = true
 
@@ -128,16 +128,16 @@ abstract class AkkaSpec(_system: ActorSystem)
     // TODO not published stopCoroner()
   }
 
-  protected def atStartup() = {}
+  protected def atStartup(): Unit = {}
 
-  protected def beforeTermination() = {}
+  protected def beforeTermination(): Unit = {}
 
-  protected def afterTermination() = {}
+  protected def afterTermination(): Unit = {}
 
   def spawn(dispatcherId: String = Dispatchers.DefaultDispatcherId)(body: => Unit): Unit =
     Future(body)(system.dispatchers.lookup(dispatcherId))
 
-  def expectedTestDuration: FiniteDuration = 60 seconds
+  def expectedTestDuration: FiniteDuration = 60.seconds
 
   def muteDeadLetters(messageClasses: Class[_]*)(sys: ActorSystem = system): Unit =
     if (!sys.log.isDebugEnabled) {

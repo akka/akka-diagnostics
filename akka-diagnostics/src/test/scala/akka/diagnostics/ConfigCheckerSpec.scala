@@ -51,7 +51,7 @@ class ConfigCheckerSpec extends AkkaSpec {
         akka.diagnostics.checker.disabled-checks = [${allDisabledCheckerKeys.mkString(",")}]
       """)
       .withFallback(c)
-    new ConfigChecker(extSys, disabled, reference).check.warnings should ===(Nil)
+    new ConfigChecker(extSys, disabled, reference).check().warnings should ===(Nil)
   }
 
   def assertCheckerKey(warnings: immutable.Seq[ConfigWarning], expectedCheckerKeys: String*): Unit =
@@ -252,12 +252,12 @@ class ConfigCheckerSpec extends AkkaSpec {
 
     "check internal-dispatcher as default-dispatcher is find" in {
       val c = ConfigFactory
-        .parseString("""
+        .parseString(s"""
           |akka.actor.default-dispatcher = {
           |  type = "Dispatcher"
           |  # ...
           |  }
-          |akka.actor.internal-dispatcher = ${akka.actor.default-dispatcher}  """.stripMargin)
+          |akka.actor.internal-dispatcher = $${akka.actor.default-dispatcher}  """.stripMargin)
         .resolve()
         .withFallback(reference)
 
