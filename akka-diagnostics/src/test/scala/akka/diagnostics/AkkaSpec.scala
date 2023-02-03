@@ -27,7 +27,8 @@ import scala.language.postfixOps
 object AkkaSpec {
   val testConf: Config = ConfigFactory.parseString("""
       akka {
-        use-slf4j = false # This is needed to avoid overriding below conf `loggers` with `["akka.event.slf4j.Slf4jLogger"]`
+        use-slf4j = false # This is needed to avoid overriding below conf `loggers`
+                          #  with `["akka.event.slf4j.Slf4jLogger"]` when importing `akka-persistence-testkit`
         loggers = ["akka.testkit.TestEventListener"]
         loglevel = "WARNING"
         stdout-loglevel = "WARNING"
