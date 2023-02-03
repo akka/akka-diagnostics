@@ -6,11 +6,15 @@ import sbt._
 object Dependencies {
   val Scala212 = "2.12.17"
   val Scala213 = "2.13.10"
+  val Scala3 = "3.1.3"
+  val CrossScalaVersions = Seq(Scala213, Scala212, Scala3)
+
   val AkkaVersion = "2.7.0"
   val AkkaVersionInDocs = AkkaVersion.take(3)
   val AkkaHttpVersionInDocs = "10.4.0"
-  val buildScalaVersion = System.getProperty("akka.build.scalaVersion", Scala213)
-  val commonsLang = "org.apache.commons" % "commons-lang3" % "3.12.0" // ApacheV2
+  val ScalaTestVersion = "3.2.15"
+
+  val commonsText = "org.apache.commons" % "commons-text" % "1.10.0" // ApacheV2
 
   object Compile {
     val akkaActor = "com.typesafe.akka" %% "akka-actor" % AkkaVersion
@@ -20,8 +24,8 @@ object Dependencies {
     val akkaRemoting = "com.typesafe.akka" %% "akka-remote" % AkkaVersion
     val akkaClusterMetrics = "com.typesafe.akka" %% "akka-cluster-metrics" % AkkaVersion
     val akkaStreamTestKit = "com.typesafe.akka" %% "akka-stream-testkit" % AkkaVersion
+    val scalaTest = "org.scalatest" %% "scalatest" % ScalaTestVersion
     val akkaPersistenceTestKit = "com.typesafe.akka" %% "akka-persistence-testkit" % AkkaVersion
-    val scalaTest = "org.scalatest" %% "scalatest" % "3.0.8"
     val junit = "junit" % "junit" % "4.13.2" // Common Public License 1.0
     val all = Seq(
       akkaRemoting % Test,
@@ -36,6 +40,6 @@ object Dependencies {
   import Compile._
 
   val akkaDiagnostics = Seq(
-    commonsLang, // for levenshtein distance impl
+    commonsText, // for levenshtein distance impl
     akkaActor) ++ TestDeps.all
 }

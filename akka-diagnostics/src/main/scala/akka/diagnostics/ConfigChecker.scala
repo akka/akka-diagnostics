@@ -7,17 +7,21 @@ package akka.diagnostics
 import java.net.InetAddress
 import java.util.Locale
 import java.util.concurrent.TimeUnit.MILLISECONDS
-import akka.actor.{ ActorSystem, ExtendedActorSystem }
-import akka.dispatch.ThreadPoolConfig
-import akka.event.Logging
-import com.typesafe.config._
-import org.apache.commons.lang3.StringUtils
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable
 import scala.collection.immutable.VectorBuilder
 import scala.concurrent.duration._
-import scala.util.{ Failure, Success, Try }
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
+
+import akka.actor.ActorSystem
+import akka.actor.ExtendedActorSystem
+import akka.dispatch.ThreadPoolConfig
+import akka.event.Logging
+import com.typesafe.config._
+import org.apache.commons.text.similarity.LevenshteinDistance
 
 object ConfigChecker {
 
@@ -221,12 +225,14 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
 
     collectLeaves("akka", reference.getConfig("akka").root)
   }
+
   private val maxSimilarDistance = 5
   private val maxSimilarItems = 3
+  private lazy val levenshteinDistance = new LevenshteinDistance(maxSimilarDistance)
   private def similar(name: String): Seq[String] =
     knownSettings
       .map { case (key, path) =>
-        (key, path, StringUtils.getLevenshteinDistance(key, name, maxSimilarDistance))
+        (key, path, levenshteinDistance.apply(key, name))
       }
       .filter(_._3 >= 0)
       .sortBy(_._3)
@@ -483,7 +489,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
     checkProvider() ++
     checkJvmExitOnFatalError() ++
     checkDefaultDispatcherSize() ++
-    checkInternalDispatcherSize ++
+    checkInternalDispatcherSize() ++
     checkDefaultDispatcherType() ++
     checkDispatcherThroughput(defaultDispatcherPath, config.getConfig(defaultDispatcherPath))
   }
@@ -685,7 +691,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       checkCreateActorRemotely() ++
       checkPreferClusterToRemote() ++
       checkRemoteDispatcherSize() ++
-      checkArteryNotEnabled
+      checkArteryNotEnabled()
     } else Vector.empty[ConfigWarning]
 
   private def checkRemoteDispatcher(): List[ConfigWarning] =
@@ -1029,7 +1035,6 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   private def checkSplitBrainResolver(): List[ConfigWarning] =
     ifEnabled("split-brain-resolver") { checkerKey =>
 
-      val downingProviderPath = "akka.cluster.downing-provider-class"
       val sbrStrategyPath = "akka.cluster.split-brain-resolver.active-strategy"
       val sbrActive = isClusterConfigAvailable && isSplitBrainResolverConfigAvailable &&
         config.getString(sbrStrategyPath).toLowerCase(Locale.ROOT) != "off"

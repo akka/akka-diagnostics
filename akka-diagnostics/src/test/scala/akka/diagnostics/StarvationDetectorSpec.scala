@@ -12,18 +12,17 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
-import akka.dispatch.ExecutionContexts
-import akka.testkit.EventFilter
 
 import scala.concurrent.Await
+import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import scala.concurrent.duration._
 import scala.util.Try
-import StarvationDetectorSpec._
-import akka.event.Logging
-import akka.diagnostics.StarvationDetector.StarvationDetectorThread
 
-import scala.concurrent.ExecutionContext
+import akka.diagnostics.StarvationDetector.StarvationDetectorThread
+import akka.dispatch.ExecutionContexts
+import akka.event.Logging
+import akka.testkit.EventFilter
 
 class StarvationDetectorSpec extends AkkaSpec(s"""
       akka.diagnostics.starvation-detector.check-interval              = 200ms # check more often
@@ -34,8 +33,8 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
         type = Dispatcher
         executor = "fork-join-executor"
         fork-join-executor {
-          parallelism-min = $numThreads
-          parallelism-max = $numThreads
+          parallelism-min = ${StarvationDetectorSpec.numThreads}
+          parallelism-max = ${StarvationDetectorSpec.numThreads}
         }
       }
       custom-affinity-dispatcher {
@@ -48,13 +47,15 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
         type = Dispatcher
         executor = "thread-pool-executor"
         thread-pool-executor {
-          fixed-pool-size = $numThreads
+          fixed-pool-size = ${StarvationDetectorSpec.numThreads}
         }
       }
     """) {
+  import akka.diagnostics.StarvationDetectorSpec._
+
   "The StarvationDetector" should {
     def testsExecutor(dispatcherId: String): Unit = s"support $dispatcherId" should {
-      implicit val dispatcher = system.dispatchers.lookup(dispatcherId)
+      implicit val dispatcher: ExecutionContext = system.dispatchers.lookup(dispatcherId)
       // default dispatcher is already checked out of the box
       if (dispatcherId != DefaultDispatcherId) {
         StarvationDetector.checkExecutionContext(
@@ -110,7 +111,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
           }
       }
       "not log a warning if the dispatcher is busy for an amount of small non-blocking tasks" in {
-        def runThunks(remaining: Int)(implicit ec: ExecutionContext): Future[Unit] =
+        def runThunks(remaining: Int): Future[Unit] =
           if (remaining > 0)
             Future {
               ()
@@ -148,7 +149,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
 
   case class AntiPattern(name: String, expectedIssueDescription: String, block: () => Unit)
   def antiPattern(name: String, expectedIssueDescription: String)(block: => Unit): AntiPattern =
-    AntiPattern(name, expectedIssueDescription, block _)
+    AntiPattern(name, expectedIssueDescription, () => block)
 
   // A collection of blocking AntiPatterns to test, each should take ~ 100ms
   lazy val AntiPatterns: Seq[AntiPattern] = Seq(

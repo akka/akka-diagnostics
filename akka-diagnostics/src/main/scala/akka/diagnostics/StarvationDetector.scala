@@ -31,12 +31,12 @@ import scala.util.Try
 import scala.util.control.NoStackTrace
 import scala.util.control.NonFatal
 
-abstract class StarvationDetectorSettings { _: StarvationDetectorSettings.StarvationDetectorSettingsImpl =>
-  def checkInterval: FiniteDuration
-  def initialDelay: FiniteDuration
-  def maxDelayWarningThreshold: FiniteDuration
-  def warningInterval: FiniteDuration
-  def threadTraceLimit: Int
+final class StarvationDetectorSettings(
+    val checkInterval: FiniteDuration,
+    val initialDelay: FiniteDuration,
+    val maxDelayWarningThreshold: FiniteDuration,
+    val warningInterval: FiniteDuration,
+    val threadTraceLimit: Int) {
 
   def withCheckInterval(newCheckInterval: FiniteDuration): StarvationDetectorSettings =
     copy(checkInterval = newCheckInterval)
@@ -52,7 +52,21 @@ abstract class StarvationDetectorSettings { _: StarvationDetectorSettings.Starva
     copy(threadTraceLimit = Integer.MAX_VALUE)
 
   def isEnabled: Boolean = checkInterval > Duration.Zero
+
+  private def copy(
+      checkInterval: FiniteDuration = checkInterval,
+      initialDelay: FiniteDuration = initialDelay,
+      maxDelayWarningThreshold: FiniteDuration = maxDelayWarningThreshold,
+      warningInterval: FiniteDuration = warningInterval,
+      threadTraceLimit: Int = threadTraceLimit): StarvationDetectorSettings =
+    new StarvationDetectorSettings(
+      checkInterval,
+      initialDelay,
+      maxDelayWarningThreshold,
+      warningInterval,
+      threadTraceLimit)
 }
+
 object StarvationDetectorSettings {
   def apply(
       checkInterval: FiniteDuration,
@@ -67,7 +81,7 @@ object StarvationDetectorSettings {
       maxDelayWarningThreshold: FiniteDuration,
       warningInterval: FiniteDuration,
       threadTraceLimit: Int): StarvationDetectorSettings =
-    StarvationDetectorSettingsImpl(
+    new StarvationDetectorSettings(
       checkInterval,
       initialDelay,
       maxDelayWarningThreshold,
@@ -109,15 +123,6 @@ object StarvationDetectorSettings {
       })
   }
 
-  /** INTERNAL API */
-  @InternalApi
-  private[StarvationDetectorSettings] final case class StarvationDetectorSettingsImpl(
-      checkInterval: FiniteDuration,
-      initialDelay: FiniteDuration,
-      maxDelayWarningThreshold: FiniteDuration,
-      warningInterval: FiniteDuration,
-      threadTraceLimit: Int)
-      extends StarvationDetectorSettings {}
 }
 
 object StarvationDetector {

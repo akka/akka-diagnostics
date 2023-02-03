@@ -32,14 +32,31 @@ inThisBuild(
 
 lazy val common: Seq[Setting[_]] =
   Seq(
-    crossScalaVersions := Seq(Dependencies.Scala213, Dependencies.Scala212),
-    scalaVersion := Dependencies.Scala213,
+    crossScalaVersions := Dependencies.CrossScalaVersions,
+    scalaVersion := Dependencies.CrossScalaVersions.head,
     crossVersion := CrossVersion.binary,
     scalafmtOnCompile := true,
     sonatypeProfileName := "com.lightbend",
+    headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>""")),
     // Setting javac options in common allows IntelliJ IDEA to import them automatically
     Compile / javacOptions ++= Seq("-encoding", "UTF-8", "-source", "1.8", "-target", "1.8"),
-    headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>""")),
+    scalacOptions ++= {
+      var scalacOptionsBase = Seq("-encoding", "UTF-8", "-feature", "-unchecked", "-deprecation")
+      if (scalaVersion.value == Dependencies.Scala212)
+        scalacOptionsBase ++: Seq("-Xfuture", "-Xfatal-warnings", "-Xlint", "-Ywarn-dead-code")
+      else if (scalaVersion.value == Dependencies.Scala213)
+        scalacOptionsBase ++: Seq("-Xfatal-warnings", "-Xlint", "-Ywarn-dead-code", "-Wconf:cat=deprecation:info")
+      else
+        scalacOptionsBase
+    },
+    javacOptions ++= (
+      if (isJdk8) Seq.empty
+      else Seq("--release", "8")
+    ),
+    scalacOptions ++= (
+      if (isJdk8 || scalaVersion.value == Dependencies.Scala212) Seq.empty
+      else Seq("--release", "8")
+    ),
     Test / logBuffered := false,
     Test / parallelExecution := false,
     // show full stack traces and test case durations
@@ -111,3 +128,6 @@ lazy val docs = (project in file("docs"))
     publishRsyncHost := "akkarepo@gustav.akka.io")
 
 lazy val dontPublish = Seq(publish / skip := true, Compile / publishArtifact := false)
+
+lazy val isJdk8 =
+  VersionNumber(sys.props("java.specification.version")).matchesSemVer(SemanticSelector(s"=1.8"))
