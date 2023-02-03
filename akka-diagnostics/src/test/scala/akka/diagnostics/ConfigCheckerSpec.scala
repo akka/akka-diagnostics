@@ -78,13 +78,13 @@ class ConfigCheckerSpec extends AkkaSpec {
   "The ConfigChecker" must {
 
     "find no warnings in PersistenceTestKitPlugin.scala configuration" in {
-      PersistenceTestKitPlugin.config
+      val c = PersistenceTestKitPlugin.config
         .withFallback(PersistenceTestKitSnapshotPlugin.config)
         .withFallback(PersistenceTestKitDurableStateStorePlugin.config)
-      val c = ConfigFactory
-        .parseString("""
+        .withFallback(ConfigFactory
+          .parseString("""
         akka.persistence.testkit.snapshotstore.pluginid.snapshot-is-optional = false
-        """)
+        """))
         .withFallback(reference)
 
       val checker = new ConfigChecker(extSys, c, reference)
