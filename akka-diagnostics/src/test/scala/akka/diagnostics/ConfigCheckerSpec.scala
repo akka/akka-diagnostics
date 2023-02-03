@@ -74,6 +74,18 @@ class ConfigCheckerSpec extends AkkaSpec {
 
   "The ConfigChecker" must {
 
+    "find no warnings in PersistenceTestKitPlugin.scala configuration" in {
+      val extendedReference = ConfigFactory.load("persistence.conf").withFallback(reference)
+      val c = ConfigFactory
+        .parseString("""
+        akka.persistence.testkit.snapshotstore.pluginid.snapshot-is-optional = false
+        """)
+        .withFallback(reference)
+
+      val checker = new ConfigChecker(extSys, c, extendedReference)
+      checker.check().warnings should be(Nil)
+    }
+
     "find no warnings in akka-actor default configuration" in {
       val checker = new ConfigChecker(extSys, reference, reference)
       checker.check().warnings should be(Nil)
