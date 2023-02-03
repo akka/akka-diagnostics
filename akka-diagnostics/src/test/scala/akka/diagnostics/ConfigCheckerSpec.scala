@@ -7,6 +7,9 @@ package akka.diagnostics
 import akka.actor.ActorSystem
 import akka.actor.ExtendedActorSystem
 import akka.diagnostics.ConfigChecker.ConfigWarning
+import akka.persistence.testkit.PersistenceTestKitDurableStateStorePlugin
+import akka.persistence.testkit.PersistenceTestKitPlugin
+import akka.persistence.testkit.PersistenceTestKitSnapshotPlugin
 import akka.testkit.EventFilter
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
@@ -73,6 +76,20 @@ class ConfigCheckerSpec extends AkkaSpec {
   }
 
   "The ConfigChecker" must {
+
+    "find no warnings in PersistenceTestKitPlugin.scala configuration" in {
+      val c = PersistenceTestKitPlugin.config
+        .withFallback(PersistenceTestKitSnapshotPlugin.config)
+        .withFallback(PersistenceTestKitDurableStateStorePlugin.config)
+        .withFallback(ConfigFactory
+          .parseString("""
+        akka.persistence.testkit.snapshotstore.pluginid.snapshot-is-optional = false
+        """))
+        .withFallback(reference)
+
+      val checker = new ConfigChecker(extSys, c, reference)
+      checker.check().warnings should be(Nil)
+    }
 
     "find no warnings in akka-actor default configuration" in {
       val checker = new ConfigChecker(extSys, reference, reference)
