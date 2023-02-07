@@ -16,6 +16,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
+import akka.actor.ActorSystem
 import akka.actor.ClassicActorSystemProvider
 import akka.actor.ExtendedActorSystem
 import akka.dispatch.ThreadPoolConfig
