@@ -5,7 +5,7 @@
 package akka.diagnostics
 
 import akka.dispatch.affinity.AffinityPool
-import akka.actor.ActorSystem
+import akka.actor.ClassicActorSystemProvider
 import akka.annotation.InternalApi
 import akka.dispatch.Dispatcher
 import akka.dispatch.ExecutorServiceDelegate
@@ -133,21 +133,21 @@ object StarvationDetector {
    * Creates and runs a StarvationDetector thread for the dispatcher of the system's main dispatcher, i.e.
    * akka.actor.default-dispatcher.
    */
-  def checkSystemDispatcher(system: ActorSystem): Unit =
+  def checkSystemDispatcher(provider: ClassicActorSystemProvider): Unit =
     checkSystemDispatcher(
-      system,
-      StarvationDetectorSettings.fromConfig(system.settings.config.getConfig("akka.diagnostics.starvation-detector")))
+      provider,
+      StarvationDetectorSettings.fromConfig(provider.classicSystem.settings.config.getConfig("akka.diagnostics.starvation-detector")))
 
   /**
    * Creates and runs a StarvationDetector thread for the dispatcher of the system's main dispatcher, i.e.
    * akka.actor.default-dispatcher, with custom configuration.
    */
-  def checkSystemDispatcher(system: ActorSystem, config: StarvationDetectorSettings): Unit =
+  def checkSystemDispatcher(provider: ClassicActorSystemProvider, config: StarvationDetectorSettings): Unit =
     checkExecutionContext(
-      system.dispatcher,
-      Logging(system, classOf[StarvationDetectorThread]),
+      provider.classicSystem.dispatcher,
+      Logging(provider.classicSystem, classOf[StarvationDetectorThread]),
       config,
-      () => system.whenTerminated.isCompleted)
+      () => provider.classicSystem.whenTerminated.isCompleted)
 
   /**
    * Creates and runs a StarvationDetector thread for the given ExecutionContext. Thread analytics are currently only
