@@ -17,6 +17,7 @@ import scala.util.Success
 import scala.util.Try
 
 import akka.actor.ActorSystem
+import akka.actor.ClassicActorSystemProvider
 import akka.actor.ExtendedActorSystem
 import akka.dispatch.ThreadPoolConfig
 import akka.event.Logging
@@ -75,15 +76,15 @@ object ConfigChecker {
   /**
    * Validates the configuration of the given actor system. This is performed when the actor system is started.
    */
-  def reportIssues(system: ExtendedActorSystem): Unit = {
+  def reportIssues(provider: ClassicActorSystemProvider): Unit = {
     import Internal._
 
-    val log = Logging.getLogger(system, classOf[ConfigChecker].getName)
+    val log = Logging.getLogger(provider.classicSystem, classOf[ConfigChecker].getName)
     log.info(
       "Starting ConfigChecker. Looking for potential issues in your configuration. Issues found will be logged as warnings")
 
     def runChecks(): ValidationResults = {
-      val checker = new ConfigChecker(system)
+      val checker = new ConfigChecker(provider.classicSystem.asInstanceOf[ExtendedActorSystem])
       val result = checker.check()
       logWarnings(result)
       result
@@ -95,13 +96,15 @@ object ConfigChecker {
         formatted.foreach(log.warning)
       }
 
-    mode(system.settings.config) match {
+    mode(provider.classicSystem.settings.config) match {
       case Disabled => // don't run checks
       case LogWarnings =>
         val asyncCheckAfter =
-          system.settings.config.getDuration("akka.diagnostics.checker.async-check-after", MILLISECONDS).millis
+          provider.classicSystem.settings.config
+            .getDuration("akka.diagnostics.checker.async-check-after", MILLISECONDS)
+            .millis
         if (asyncCheckAfter > Duration.Zero)
-          system.scheduler.scheduleOnce(asyncCheckAfter)(runChecks())(system.dispatcher)
+          provider.classicSystem.scheduler.scheduleOnce(asyncCheckAfter)(runChecks())(provider.classicSystem.dispatcher)
         else
           runChecks()
 
