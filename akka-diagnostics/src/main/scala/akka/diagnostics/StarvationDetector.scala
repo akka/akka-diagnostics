@@ -136,7 +136,8 @@ object StarvationDetector {
   def checkSystemDispatcher(provider: ClassicActorSystemProvider): Unit =
     checkSystemDispatcher(
       provider,
-      StarvationDetectorSettings.fromConfig(provider.classicSystem.settings.config.getConfig("akka.diagnostics.starvation-detector")))
+      StarvationDetectorSettings.fromConfig(
+        provider.classicSystem.settings.config.getConfig("akka.diagnostics.starvation-detector")))
 
   /**
    * Creates and runs a StarvationDetector thread for the dispatcher of the system's main dispatcher, i.e.
