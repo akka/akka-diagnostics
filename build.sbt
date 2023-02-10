@@ -22,7 +22,7 @@ inThisBuild(
       url("https://github.com/akka/akka-diagnostics/graphs/contributors")),
     licenses := Seq(
       ("BUSL-1.1", url("https://raw.githubusercontent.com/akka/akka-diagnostics/main/LICENSE"))
-    ), // FIXME change s/main/v1.1.0/ before releasing 1.1.0
+    ), // FIXME change s/main/v2.0.0/ before releasing 2.0.0
     description := "Akka diagnostics tools and utilities",
     // add snapshot repo when Akka version overriden
     resolvers ++=
@@ -37,7 +37,7 @@ lazy val common: Seq[Setting[_]] =
     crossVersion := CrossVersion.binary,
     scalafmtOnCompile := true,
     sonatypeProfileName := "com.lightbend",
-    headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>""")),
+    headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2023 Lightbend Inc. <https://www.lightbend.com>""")),
     // Setting javac options in common allows IntelliJ IDEA to import them automatically
     Compile / javacOptions ++= Seq("-encoding", "UTF-8", "-source", "1.8", "-target", "1.8"),
     scalacOptions ++= {
