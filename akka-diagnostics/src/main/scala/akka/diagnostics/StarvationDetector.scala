@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package akka.diagnostics
@@ -320,7 +320,8 @@ object StarvationDetector {
             case NonFatal(ex) =>
               log.error(
                 ex,
-                "Starvation detector failed and terminated. This is likely a bug. Please report to Lightbend support.")
+                "Starvation detector failed and terminated. This is likely a bug. " +
+                "Please report to https://github.com/akka/akka-diagnostics/issues")
               return
           }
           // Add +/- 5% of jitter. In tests, we observed accidental synchronization of starvation detector execution

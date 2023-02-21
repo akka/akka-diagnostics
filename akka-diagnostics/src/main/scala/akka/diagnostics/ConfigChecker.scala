@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package akka.diagnostics
@@ -659,7 +659,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
   private def checkTotalDispatcherPoolSize(dispatchers: Map[String, Config]): List[ConfigWarning] =
     ifEnabled("dispatcher-total-size") { checkerKey =>
       val sizes = dispatchers.collect {
-        // FIXME does the filtering really make sense here, don't we want to include the lightbend
+        // FIXME does the filtering really make sense here, don't we want to include the Akka
         // dispatcher pool sizes as well?
         case (p, c) if !isAkkaSystemDispatcher(p) =>
           val cfgWithFallback = c.withFallback(system.dispatchers.defaultDispatcherConfig)

@@ -1,23 +1,28 @@
 /*
- * Copyright (C) 2022 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2023 Lightbend Inc. <https://www.lightbend.com>
  */
 
 package akka.diagnostics
 
+import akka.actor.ActorSystem
+import akka.actor.ClassicActorSystemProvider
 import akka.actor.ExtendedActorSystem
 import akka.actor.Extension
 import akka.actor.ExtensionId
 import akka.actor.ExtensionIdProvider
 
 /**
- * The diagnostics extension enables the `DiagnosticsRecorder` for an actor system.
+ * The diagnostics extension enables the [[StarvationDetector]] and reports configuration issues with [[ConfigChecker]]
+ * for an `ActorSystem`. This extension is automatically activated when the `akka-diagnostics` dependency is included.
  */
-object DiagnosticsExtension extends ExtensionId[DiagnosticsImpl] with ExtensionIdProvider {
+object DiagnosticsExtension extends ExtensionId[DiagnosticsExtension] with ExtensionIdProvider {
+  override def get(system: ActorSystem): DiagnosticsExtension = super.get(system)
+  override def get(system: ClassicActorSystemProvider): DiagnosticsExtension = super.get(system)
   override def lookup: ExtensionId[_ <: Extension] = DiagnosticsExtension
-  override def createExtension(system: ExtendedActorSystem): DiagnosticsImpl = new DiagnosticsImpl(system)
+  override def createExtension(system: ExtendedActorSystem): DiagnosticsExtension = new DiagnosticsExtension(system)
 }
 
-class DiagnosticsImpl(system: ExtendedActorSystem) extends Extension {
+class DiagnosticsExtension(system: ExtendedActorSystem) extends Extension {
   StarvationDetector.checkSystemDispatcher(system)
   StarvationDetector.checkInternalDispatcher(system)
   ConfigChecker.reportIssues(system)
