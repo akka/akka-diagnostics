@@ -20,9 +20,12 @@ inThisBuild(
       "Contributors",
       "https://gitter.im/akka/dev",
       url("https://github.com/akka/akka-diagnostics/graphs/contributors")),
-    licenses := Seq(
-      ("BUSL-1.1", url("https://raw.githubusercontent.com/akka/akka-diagnostics/main/LICENSE"))
-    ), // FIXME change s/main/v2.0.0/ before releasing 2.0.0
+    licenses := {
+      val tagOrBranch =
+        if (version.value.endsWith("SNAPSHOT")) "main"
+        else "v" + version.value
+      Seq(("BUSL-1.1", url(s"https://raw.githubusercontent.com/akka/akka-diagnostics/${tagOrBranch}/LICENSE")))
+    },
     description := "Akka diagnostics tools and utilities",
     // add snapshot repo when Akka version overriden
     resolvers ++=
