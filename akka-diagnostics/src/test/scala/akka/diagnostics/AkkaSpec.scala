@@ -37,7 +37,6 @@ object AkkaSpec {
             executor = "fork-join-executor"
             fork-join-executor {
               parallelism-min = 8
-              parallelism-factor = 2.0
               parallelism-max = 8
             }
           }

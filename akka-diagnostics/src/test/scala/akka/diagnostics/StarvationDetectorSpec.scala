@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.Executors
 import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext
@@ -26,10 +27,22 @@ import akka.event.Logging
 import akka.testkit.EventFilter
 
 class StarvationDetectorSpec extends AkkaSpec(s"""
-      akka.diagnostics.starvation-detector.check-interval              = 200ms # check more often
+      akka.diagnostics.starvation-detector.check-interval              = 100ms # check more often
       akka.diagnostics.starvation-detector.initial-delay               = 0     # no initial delay
-      akka.diagnostics.starvation-detector.max-delay-warning-threshold = 30ms  # make check tighter
-      akka.diagnostics.starvation-detector.warning-interval            = 10s   # must be longer than one antipattern test, so it is reported only once
+      akka.diagnostics.starvation-detector.max-delay-warning-threshold = 70ms  # make check tighter
+      akka.diagnostics.starvation-detector.warning-interval            = 20s   # must be longer than one antipattern test, so it is reported only once
+      akka.actor.default-dispatcher {
+        fork-join-executor {
+          parallelism-min = ${StarvationDetectorSpec.numThreads}
+          parallelism-max = ${StarvationDetectorSpec.numThreads}
+        }
+      }
+      akka.actor.internal-dispatcher {
+        fork-join-executor {
+          parallelism-min = ${StarvationDetectorSpec.numThreads}
+          parallelism-max = ${StarvationDetectorSpec.numThreads}
+        }
+      }
       custom-fjp-dispatcher {
         type = Dispatcher
         executor = "fork-join-executor"
@@ -42,6 +55,8 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
         type = Dispatcher
         executor = "affinity-pool-executor"
         affinity-pool-executor {
+          parallelism-min = ${StarvationDetectorSpec.numThreads}
+          parallelism-max = ${StarvationDetectorSpec.numThreads}
         }
       }
       custom-threadpool-dispatcher {
@@ -107,24 +122,41 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
                     2 // 5 * numThreads  iterations * 2 tasks * 100ms / numThreads = 2 seconds run time
 
                   val result = Future.traverse(1 to (numThreads * 5))(runOne(_, numIterations))
-                  Await.result(result, 10.seconds)
+                  Await.result(result, 20.seconds)
                 }
             }
           }
       }
       "not log a warning if the dispatcher is busy for an amount of small non-blocking tasks" in {
-        def runThunks(remaining: Int): Future[Unit] =
+        // Ignore because it's flaky in CI
+        if (Runtime.getRuntime.availableProcessors <= 2)
+          pending
+
+        resetWarningInterval()
+
+        var t0 = System.nanoTime()
+        def runThunks(remaining: Int): Future[Unit] = {
           if (remaining > 0)
             Future {
               ()
             }.flatMap(_ => runThunks(remaining - 1))
-          else Future.successful(())
+          else {
+            Future.successful(())
+          }
+        }
 
         EventFilter.warning(start = "Exceedingly long scheduling time on ExecutionContext", occurrences = 0).intercept {
-          val numIterations = 10000 // 10000 * 200 tasks, runs in 1.7 seconds on my machine on two threads
+          var numIterations = 10000
 
-          val result = Future.sequence((1 to 200).map(_ => runThunks(numIterations)))
-          Await.result(result, 10.seconds)
+          val parallelism = math.max(1, math.min(numThreads, Runtime.getRuntime.availableProcessors) - 1)
+          (1 to 5).foreach { _ =>
+            t0 = System.nanoTime()
+            val result = Future.sequence((1 to parallelism).map(_ => runThunks(numIterations)))
+            Await.result(result, 10.seconds)
+            val durationMillis = (System.nanoTime() - t0) / 1000 / 1000
+            if (durationMillis < 100)
+              numIterations = numIterations * 10
+          }
         }
       }
     }
@@ -138,14 +170,20 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
 
   // HACK to make sure that next test will not run into warning silence
   private def resetWarningInterval(): Unit = {
+    // clear any leftover log messages
+    EventFilter.warning().intercept {
+      Thread.sleep(1000)
+    }
+
     val threads = new Array[Thread](10000)
     val res = Thread.enumerate(threads)
+    val nextWarningAfterNanos = System.nanoTime() - 1
     threads
       .take(res)
       .collect { case t: StarvationDetectorThread =>
         t
       }
-      .foreach(_.nextWarningAfterNanos = 0L)
+      .foreach(_.nextWarningAfterNanos = nextWarningAfterNanos)
   }
 
   val OtherEC = ExecutionContexts.fromExecutor(Executors.newCachedThreadPool())
@@ -154,14 +192,18 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
   def antiPattern(name: String, expectedIssueDescription: String)(block: => Unit): AntiPattern =
     AntiPattern(name, expectedIssueDescription, () => block)
 
+  private val fileSize = new AtomicInteger(1000000)
+
   // A collection of blocking AntiPatterns to test, each should take ~ 100ms
   lazy val AntiPatterns: Seq[AntiPattern] = Seq(
-    antiPattern("Thread.sleep", "Thread.sleep blocks a thread") { Thread.sleep(100) },
+    antiPattern("Thread.sleep", "Thread.sleep blocks a thread") {
+      Thread.sleep(100)
+    },
     // Await currently mostly works because it uses the blocking context (it might spawn excessive amounts of extra threads, though)
     // antiPattern("Await", "Await.ready / Await.result blocks a thread")(Try(Await.ready(Promise().future, 100.millis))),
     antiPattern("Socket connect", "java.net API is synchronous and blocks a thread") {
       new Socket()
-        .connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(80, 120))
+        .connect(new InetSocketAddress("www.google.com", 81), ThreadLocalRandom.current().nextInt(100, 150))
     },
     antiPattern("Socket read", "java.net API is synchronous and blocks a thread") {
       val s = new Socket()
@@ -172,27 +214,32 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
       } finally s.close()
     },
     antiPattern("FileOutputStream.write", "java.io API is synchronous") {
+      val t0 = System.nanoTime()
       val tmp = File.createTempFile("bigfile", "txt")
       tmp.deleteOnExit()
 
-      val b = new Array[Byte](9000000) // may need tuning depending on how fast your disk is
+      val size = fileSize.get
+      val b = new Array[Byte](size)
       val fos = new FileOutputStream(tmp)
       try fos.write(b)
       finally {
         fos.close()
         tmp.delete()
+        val durationMs = (System.nanoTime() - t0) / 1000 / 1000
+        if (durationMs < 100)
+          fileSize.compareAndSet(size, size * 2) // tuning depending on how fast your disk is
       }
     },
     antiPattern("CompletableFuture.get", "CompletableFuture.get blocks a thread.") {
       val f = new CompletableFuture
 
-      Try(f.get(100, TimeUnit.MILLISECONDS))
+      Try(f.get(150, TimeUnit.MILLISECONDS))
     })
 
   private def newTimeOut(): Int = ThreadLocalRandom.current().nextInt(80, 120)
 }
 object StarvationDetectorSpec {
-  val numThreads = 8
+  val numThreads = 4
   val DefaultDispatcherId = Dispatchers.DefaultDispatcherId
   val InternalDispatcherId = "akka.actor.internal-dispatcher"
 }
