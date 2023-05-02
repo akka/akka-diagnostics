@@ -42,7 +42,7 @@ lazy val common: Seq[Setting[_]] =
     sonatypeProfileName := "com.lightbend",
     headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2023 Lightbend Inc. <https://www.lightbend.com>""")),
     // Setting javac options in common allows IntelliJ IDEA to import them automatically
-    Compile / javacOptions ++= Seq("-encoding", "UTF-8", "-source", "1.8", "-target", "1.8"),
+    Compile / javacOptions ++= Seq("-encoding", "UTF-8"),
     scalacOptions ++= {
       var scalacOptionsBase = Seq("-encoding", "UTF-8", "-feature", "-unchecked", "-deprecation")
       if (scalaVersion.value == Dependencies.Scala212)

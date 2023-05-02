@@ -36,7 +36,15 @@ When this dependency is included the Starvation Detector is automatically run wh
 is started.
 
 You can create starvation detectors for other execution contexts than the main Akka ActorSystem one as well.
-Use `com.lightbend.akka.diagnostics.StarvationDetector.checkExecutionContext` to create a starvation detector
+
+Scala
+:  @@snip [StarvationDetectorDocSample.scala](/akka-diagnostics/src/test/scala/docs/StarvationDetectorDocSample.scala) { #other-dispatcher }
+
+Java
+:  @@snip [StarvationDetectorDocSample.scala](/akka-diagnostics/src/test/java/jdocs/StarvationDetectorDocSample.java) { #other-dispatcher }
+
+
+You can use `com.lightbend.akka.diagnostics.StarvationDetector.checkExecutionContext` to create a starvation detector
 for any `ExecutionContext` (though, it will not include stack trace information if the `ExecutionContext`
 is not an Akka Dispatcher).
 
