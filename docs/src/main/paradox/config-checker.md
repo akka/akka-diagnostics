@@ -34,8 +34,8 @@ is started.
 
 ## What is the output?
 
-By default the checker will be run when the actor system is started and it will log
-recommendations at warning log level. Those log messages start with "Lightbend recommendation: ",
+By default, the checker will be run when the actor system is started and it will log
+recommendations at warning log level. Those log messages start with "Configuration recommendation:",
 so it should be easy to find them. Such a recommendation log message may look like:
 
 ```
@@ -51,7 +51,6 @@ starts an actor system with the production like configuration. This test can be
 configured to fail the startup of the actor system when configuration issues are found.
 An *IllegalArgumentException* will then be thrown from `ActorSystem.apply/create`
 if there are any issues.
-:
 
 ```
 # If this poperty is "on" an IllegalArgumentException is thrown
@@ -86,7 +85,6 @@ inside "akka" you can confirm that it is not a typo or misplacement by adding th
 configuration path to `akka.diagnostics.checker.confirmed-typos`. All properties starting
 with that path will not be checked for typos, i.e. you can add the path of a whole section
 to skip everything inside that section.
-:
 
 ```
 akka.diagnostics.checker.confirmed-typos = [
@@ -121,8 +119,7 @@ akka.cluster.gossip-interval is an advanced configuration setting. Make sure tha
 
 As you can see in the warning message you can confirm that you know the meaning of a
 specific configuration setting that is classified as "power user" setting.
-When confirmed it will not warn about that setting any more.
-:
+When confirmed it will not warn about that setting anymore.
 
 ```
 akka.diagnostics.checker.confirmed-power-user-settings = [
