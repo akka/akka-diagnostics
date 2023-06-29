@@ -22,7 +22,7 @@ inThisBuild(
       url("https://github.com/akka/akka-diagnostics/graphs/contributors")),
     releaseNotesURL := (
         if (isSnapshot.value) None
-        else Some(url(s"https://github.com/akka/akka/releases/tag/v${version.value}"))
+        else Some(url(s"https://github.com/akka/akka-diagnostics/releases/tag/v${version.value}"))
       ),
     licenses := {
       val tagOrBranch =
