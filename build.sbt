@@ -20,9 +20,13 @@ inThisBuild(
       "Contributors",
       "https://gitter.im/akka/dev",
       url("https://github.com/akka/akka-diagnostics/graphs/contributors")),
+    releaseNotesURL := (
+        if (isSnapshot.value) None
+        else Some(url(s"https://github.com/akka/akka/releases/tag/v${version.value}"))
+      ),
     licenses := {
       val tagOrBranch =
-        if (version.value.endsWith("SNAPSHOT")) "main"
+        if (isSnapshot.value) "main"
         else "v" + version.value
       Seq(("BUSL-1.1", url(s"https://raw.githubusercontent.com/akka/akka-diagnostics/${tagOrBranch}/LICENSE")))
     },
