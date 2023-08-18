@@ -4,7 +4,6 @@
 
 package akka.diagnostics
 
-import java.net.InetAddress
 import java.util
 import java.util.Locale
 import java.util.concurrent.TimeUnit.MILLISECONDS
@@ -718,7 +717,6 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
       Vector.empty[ConfigWarning] ++
       checkRemoteDispatcher() ++
       checkRemoteWatchFailureDetector() ++
-      checkHostname() ++
       checkFrameSize() ++
       checkCreateActorRemotely() ++
       checkPreferClusterToRemote() ++
@@ -801,33 +799,6 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
         else Nil
 
       List(w1, w2, w3, w4).flatten
-    }
-
-  private def checkHostname(): List[ConfigWarning] =
-    ifEnabled("hostname") { checkerKey =>
-      val path = "akka.remote.artery.enabled"
-      if (config.getBoolean(path)) {
-        // artery
-        config.getString("akka.remote.artery.canonical.hostname") match {
-          case "<getHostAddress>" =>
-            warn(
-              checkerKey,
-              "akka.remote.artery.canonical.hostname",
-              s"hostname is set to <getHostAddress>, which means that `InetAddress.getLocalHost.getHostAddress` " +
-              "will be used to resolve the hostname. That can result in wrong hostname in some environments, " +
-              """such as "127.0.1.1". Define the hostname explicitly instead. """ +
-              s"On this machine `InetAddress.getLocalHost.getHostAddress` is [${InetAddress.getLocalHost.getHostAddress}].")
-          case "<getHostName>" =>
-            warn(
-              checkerKey,
-              "akka.remote.artery.canonical.hostname",
-              s"hostname is set to <getHostName>, which means that `InetAddress.getLocalHost.getHostAddress` " +
-              "will be used to resolve the hostname. That can result in wrong hostname in some environments, " +
-              """such as "127.0.1.1". Define the hostname explicitly instead. """ +
-              s"On this machine `InetAddress.getLocalHost.getHostAddress` is [${InetAddress.getLocalHost.getHostName}].")
-          case _ => Nil
-        }
-      } else Nil
     }
 
   private def checkArteryNotEnabled(): List[ConfigWarning] =

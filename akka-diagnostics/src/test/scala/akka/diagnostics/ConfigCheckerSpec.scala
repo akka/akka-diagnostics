@@ -865,45 +865,6 @@ class ConfigCheckerSpec extends AkkaSpec {
       assertDisabled(c, "remote-prefer-cluster")
     }
 
-    "not warn about the dynamic hostnames when artery is used" in {
-      val config1 = ConfigFactory
-        .parseString("""
-       akka {
-         actor {
-           provider = remote
-         }
-         remote {
-           artery {
-             enabled = on
-             canonical.hostname = "<getHostAddress>"
-             canonical.port = 25252
-             log-aeron-counters = on
-           }
-         }
-       }
-      """)
-        .withFallback(reference)
-
-      val checker = new ConfigChecker(extSys, config1, reference)
-      val warnings = checker.check().warnings
-
-      printDocWarnings(warnings)
-      assertCheckerKey(warnings, "hostname", "remote-prefer-cluster")
-      assertPath(warnings, "akka.remote.artery.canonical.hostname", "akka.actor.provider")
-
-      val config2 =
-        ConfigFactory.parseString("""akka.remote.artery.canonical.hostname = "<getHostName>" """).withFallback(config1)
-
-      val checker2 = new ConfigChecker(extSys, config2, reference)
-      val warnings2 = checker2.check().warnings
-
-      printDocWarnings(warnings2)
-      assertCheckerKey(warnings2, "hostname", "remote-prefer-cluster")
-      assertPath(warnings2, "akka.remote.artery.canonical.hostname", "akka.actor.provider")
-      assertDisabled(config2, "hostname", "remote-prefer-cluster")
-
-    }
-
     "not warn about HTTP server, client and pool specific parsing overrides" in {
       // these are brought in through some trix in akka-http
       val config = ConfigFactory

@@ -290,20 +290,6 @@ Don't use jvm-exit-on-fatal-error=off. It's safer to shutdown the JVM in case of
 [akka.remote.netty.udp] is not a recommended transport for remote actor messages in production. Related config properties: [akka.remote.enabled-transports]. You may disable this check by adding [enabled-transports] to configuration string list akka.diagnostics.checker.disabled-checks.
 ```
 
-### hostname
-
-*If using Artery:*
-
-```
-hostname is set to <getHostAddress>, which means that `InetAddress.getLocalHost.getHostAddress` will be used to resolve the hostname. That can result in wrong hostname in some environments, such as "127.0.1.1". Define the hostname explicitly instead. On this machine `InetAddress.getLocalHost.getHostAddress` is [192.168.1.85]. Related config properties: [akka.remote.artery.canonical.hostname = <getHostAddress>]. Corresponding default values: [akka.remote.artery.canonical.hostname = <getHostAddress>]. You may disable this check by adding [hostname] to configuration string list akka.diagnostics.checker.disabled-checks.
-```
-
-or
-
-```
- hostname is set to <getHostName>, which means that `InetAddress.getLocalHost.getHostAddress` will be used to resolve the hostname. That can result in wrong hostname in some environments, such as "127.0.1.1". Define the hostname explicitly instead. On this machine `InetAddress.getLocalHost.getHostAddress` is [Johans-iMac.local]. Related config properties: [akka.remote.artery.canonical.hostname = <getHostName>]. Corresponding default values: [akka.remote.artery.canonical.hostname = <getHostAddress>]. You may disable this check by adding [hostname] to configuration string list akka.diagnostics.checker.disabled-checks.
-```
-
 ### maximum-frame-size
 
 ```
