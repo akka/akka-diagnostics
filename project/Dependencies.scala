@@ -6,7 +6,7 @@ import sbt._
 object Dependencies {
   val Scala212 = "2.12.17"
   val Scala213 = "2.13.10"
-  val Scala3 = "3.1.3"
+  val Scala3 = "3.3.1"
   val CrossScalaVersions = Seq(Scala213, Scala212, Scala3)
 
   val AkkaVersion = "2.7.0"
