@@ -6,6 +6,12 @@ Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
 val specificationVersion: String = sys.props("java.specification.version")
 val isJdk17orHigher: Boolean =
   VersionNumber(specificationVersion).matchesSemVer(SemanticSelector(">=17"))
+val isJdk11orHigher: Boolean = {
+  val result = VersionNumber(sys.props("java.specification.version")).matchesSemVer(SemanticSelector(">=11"))
+  if (!result)
+    throw new IllegalArgumentException("JDK 11 or higher is required")
+  result
+}
 
 inThisBuild(
   Seq(
@@ -46,22 +52,14 @@ lazy val common: Seq[Setting[_]] =
     sonatypeProfileName := "com.lightbend",
     headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2023 Lightbend Inc. <https://www.lightbend.com>""")),
     // Setting javac options in common allows IntelliJ IDEA to import them automatically
-    Compile / javacOptions ++= Seq("-encoding", "UTF-8"),
-    scalacOptions ++= {
-      var scalacOptionsBase = Seq("-encoding", "UTF-8", "-feature", "-unchecked", "-deprecation")
+    Compile / javacOptions ++= Seq("-encoding", "UTF-8", "--release", "11"),
+    Compile / scalacOptions ++= {
+      var scalacOptionsBase = Seq("-encoding", "UTF-8", "-feature", "-unchecked", "-deprecation", "-release", "11")
       if (scalaVersion.value == Dependencies.Scala213)
         scalacOptionsBase ++: Seq("-Xfatal-warnings", "-Xlint", "-Ywarn-dead-code", "-Wconf:cat=deprecation:info")
       else
         scalacOptionsBase
     },
-    javacOptions ++= (
-      if (isJdk8) Seq.empty
-      else Seq("--release", "8")
-    ),
-    scalacOptions ++= (
-      if (isJdk8) Seq.empty
-      else Seq("--release", "8")
-    ),
     Test / logBuffered := false,
     Test / parallelExecution := false,
     // show full stack traces and test case durations
@@ -133,6 +131,3 @@ lazy val docs = (project in file("docs"))
     publishRsyncHost := "akkarepo@gustav.akka.io")
 
 lazy val dontPublish = Seq(publish / skip := true, Compile / publishArtifact := false)
-
-lazy val isJdk8 =
-  VersionNumber(sys.props("java.specification.version")).matchesSemVer(SemanticSelector(s"=1.8"))
