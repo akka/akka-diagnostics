@@ -14,7 +14,6 @@ import akka.testkit.EventFilter
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
 
-import scala.annotation.nowarn
 import scala.collection.JavaConverters._
 import scala.collection.immutable
 import scala.util.Try
@@ -890,18 +889,16 @@ class ConfigCheckerSpec extends AkkaSpec {
       warnings should be(Vector.empty)
     }
 
-    @nowarn("msg=possible missing interpolator")
     val defaultGrpc = ConfigFactory.parseString("""
       akka.grpc.client."*" {
         host = ""
         port = 0
-        ssl-config = ${ssl-config}
       }
     """)
 
     "not warn about paths with quotes" in {
       val config = ConfigFactory
-        .parseString("""akka.grpc.client."*".ssl-config.hostnameVerifierClass = 37""")
+        .parseString("""akka.grpc.client."*".port = 1037""")
         .withFallback(reference)
       val referenceWithGrpc = reference.withFallback(defaultGrpc).resolve
       val checker = new ConfigChecker(extSys, config, referenceWithGrpc)
@@ -930,7 +927,7 @@ class ConfigCheckerSpec extends AkkaSpec {
         Vector(
           ConfigWarning(
             "typo",
-            """akka.grpc.client."helloworld.GreeterService".poort is not an Akka configuration setting. Did you mean one of 'akka.remote.classic.netty.tcp.port', 'akka.remote.classic.netty.ssl.port', 'akka.remote.artery.bind.port'? Is it a typo or is it placed in the wrong section? Application specific properties should be placed outside the "akka" config tree.""",
+            """akka.grpc.client."helloworld.GreeterService".poort is not an Akka configuration setting. Did you mean one of 'akka.remote.artery.bind.port', 'akka.remote.artery.canonical.port', 'akka.grpc.client.*.port'? Is it a typo or is it placed in the wrong section? Application specific properties should be placed outside the "akka" config tree.""",
             List("""akka.grpc.client."helloworld.GreeterService".poort"""),
             List()),
           ConfigWarning(
