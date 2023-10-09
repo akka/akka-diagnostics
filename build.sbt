@@ -1,4 +1,6 @@
 import akka.AutomaticModuleName
+import com.geirsson.CiReleasePlugin
+import sbtdynver.DynVerPlugin.autoImport.dynverSonatypeSnapshots
 
 GlobalScope / parallelExecution := false
 Global / concurrentRestrictions += Tags.limit(Tags.Test, 1)
@@ -37,7 +39,10 @@ inThisBuild(
       Seq(("BUSL-1.1", url(s"https://raw.githubusercontent.com/akka/akka-diagnostics/${tagOrBranch}/LICENSE")))
     },
     description := "Akka diagnostics tools and utilities",
+    // append -SNAPSHOT to version when isSnapshot
+    dynverSonatypeSnapshots := true,
     // add snapshot repo when Akka version overriden
+    resolvers += "Akka library repository".at("https://repo.akka.io/maven"),
     resolvers ++=
       (if (System.getProperty("override.akka.version") != null)
          Seq("Akka Snapshots".at("https://oss.sonatype.org/content/repositories/snapshots/"))
@@ -49,7 +54,6 @@ lazy val common: Seq[Setting[_]] =
     scalaVersion := Dependencies.CrossScalaVersions.head,
     crossVersion := CrossVersion.binary,
     scalafmtOnCompile := true,
-    sonatypeProfileName := "com.lightbend",
     headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2023 Lightbend Inc. <https://www.lightbend.com>""")),
     // Setting javac options in common allows IntelliJ IDEA to import them automatically
     Compile / javacOptions ++= Seq("-encoding", "UTF-8", "--release", "11"),
@@ -87,7 +91,7 @@ lazy val root = (project in file("."))
     publishTo := Some(Resolver.file("Unused transient repository", file("target/unusedrepo"))))
   .settings(common)
   .enablePlugins(ScalaUnidocPlugin)
-  .disablePlugins(SitePlugin)
+  .disablePlugins(SitePlugin, CiReleasePlugin)
   .settings(dontPublish)
   .aggregate(`akka-diagnostics`, docs)
 
@@ -95,6 +99,7 @@ lazy val `akka-diagnostics` = (project in file("akka-diagnostics"))
   .settings(common)
   .settings(libraryDependencies ++= Dependencies.akkaDiagnostics)
   .settings(AutomaticModuleName.settings("akka.diagnostics"))
+  .disablePlugins(CiReleasePlugin)
 
 lazy val docs = (project in file("docs"))
   .enablePlugins(AkkaParadoxPlugin, ParadoxSitePlugin, PreprocessPlugin, PublishRsyncPlugin)
@@ -129,5 +134,6 @@ lazy val docs = (project in file("docs"))
     resolvers += Resolver.jcenterRepo, // required to resolve paradox-theme-akka
     publishRsyncArtifacts += makeSite.value -> "www/",
     publishRsyncHost := "akkarepo@gustav.akka.io")
+  .disablePlugins(CiReleasePlugin)
 
 lazy val dontPublish = Seq(publish / skip := true, Compile / publishArtifact := false)
