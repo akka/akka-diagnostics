@@ -8,7 +8,7 @@ object Dependencies {
   val Scala3 = "3.3.1"
   val CrossScalaVersions = Seq(Scala213, Scala3)
 
-  val AkkaVersion = "2.9.0-M3"
+  val AkkaVersion = "2.9.0"
   val AkkaVersionInDocs = AkkaVersion.take(3)
   val AkkaHttpVersionInDocs = "10.6"
   val ScalaTestVersion = "3.2.15"
