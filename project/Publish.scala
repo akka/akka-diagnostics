@@ -44,7 +44,7 @@ object Publish extends AutoPlugin {
     sonatypeProfileName := "com.lightbend",
     beforePublishTask := beforePublish(isSnapshot.value),
     publishSigned := publishSigned.dependsOn(beforePublishTask).value,
-        publishTo :=
+    publishTo :=
       (if (isSnapshot.value)
          Some("Cloudsmith API".at("https://maven.cloudsmith.io/lightbend/akka-snapshots/"))
        else
