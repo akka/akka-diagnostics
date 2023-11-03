@@ -33,5 +33,5 @@ It is possible to release a revised documentation to the already existing releas
 ## Snapshots
 
 If you want to test an improvement that is not yet released, you can use a
-snapshot version: we release all commits to main to the snapshot repository
-on [Sonatype](https://oss.sonatype.org/content/repositories/snapshots/com/lightbend/akka/akka-diagnostics).
+snapshot version. We publish snapshot versions for every commit to the `main` branch.
+Snapshot builds are available at https://repo.akka.io/snapshots.
