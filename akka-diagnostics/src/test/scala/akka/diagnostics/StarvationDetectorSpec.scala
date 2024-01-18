@@ -219,7 +219,6 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
       tmp.deleteOnExit()
 
       val size = fileSize.get
-      println(s"### $size")
       val b = new Array[Byte](size)
       val fos = new FileOutputStream(tmp)
 
