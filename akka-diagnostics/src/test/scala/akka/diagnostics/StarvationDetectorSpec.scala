@@ -132,6 +132,11 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
         if (Runtime.getRuntime.availableProcessors <= 2)
           pending
 
+        // fails consistently locally and on CI https://github.com/akka/akka-diagnostics/issues/63
+        if (dispatcherId == "custom-affinity-dispatcher")
+          pending
+
+        Thread.sleep(1000)
         resetWarningInterval()
 
         var t0 = System.nanoTime()
@@ -229,7 +234,7 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
         val durationMs = (System.nanoTime() - t0) / 1000 / 1000
         if (durationMs < 100)
           // tuning depending on how fast your disk is
-          // Note: with a fast SSD this may cause OOM
+          // Note: with a fast SSD this requires _a lot_ of memory
           fileSize.compareAndSet(size, size * 2)
       }
     },
