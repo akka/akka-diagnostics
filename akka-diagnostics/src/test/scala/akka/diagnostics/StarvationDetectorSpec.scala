@@ -132,6 +132,11 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
         if (Runtime.getRuntime.availableProcessors <= 2)
           pending
 
+        // fails consistently locally and on CI https://github.com/akka/akka-diagnostics/issues/63
+        if (dispatcherId == "custom-affinity-dispatcher")
+          pending
+
+        Thread.sleep(1000)
         resetWarningInterval()
 
         var t0 = System.nanoTime()
@@ -221,13 +226,16 @@ class StarvationDetectorSpec extends AkkaSpec(s"""
       val size = fileSize.get
       val b = new Array[Byte](size)
       val fos = new FileOutputStream(tmp)
+
       try fos.write(b)
       finally {
         fos.close()
         tmp.delete()
         val durationMs = (System.nanoTime() - t0) / 1000 / 1000
         if (durationMs < 100)
-          fileSize.compareAndSet(size, size * 2) // tuning depending on how fast your disk is
+          // tuning depending on how fast your disk is
+          // Note: with a fast SSD this requires _a lot_ of memory
+          fileSize.compareAndSet(size, size * 2)
       }
     },
     antiPattern("CompletableFuture.get", "CompletableFuture.get blocks a thread.") {

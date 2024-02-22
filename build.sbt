@@ -80,7 +80,7 @@ lazy val common: Seq[Setting[_]] =
       val openModules =
         if (isJdk17orHigher) Seq("--add-opens=java.base/java.util.concurrent=ALL-UNNAMED")
         else Nil
-      "-Xms1G" :: "-Xmx1G" :: "-XX:MaxDirectMemorySize=256M" :: akkaProperties ++ openModules
+      "-Xms1G" :: "-Xmx16G" :: "-XX:MaxDirectMemorySize=256M" :: akkaProperties ++ openModules
     },
     projectInfoVersion := (if (isSnapshot.value) "snapshot" else version.value),
     Global / excludeLintKeys += projectInfoVersion)

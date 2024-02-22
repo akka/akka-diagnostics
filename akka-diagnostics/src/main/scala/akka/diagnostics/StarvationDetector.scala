@@ -5,7 +5,6 @@
 package akka.diagnostics
 
 import java.util.concurrent.ConcurrentHashMap
-
 import akka.dispatch.affinity.AffinityPool
 import akka.actor.ClassicActorSystemProvider
 import akka.annotation.InternalApi
@@ -16,6 +15,7 @@ import akka.dispatch.MonitorableThreadFactory
 import akka.event.Logging
 import akka.event.LoggingAdapter
 import com.typesafe.config.Config
+
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.ThreadLocalRandom
@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
 import java.util.function.BooleanSupplier
-
+import scala.annotation.nowarn
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration._
@@ -485,12 +485,16 @@ object StarvationDetector {
   private type StackTraceFilter = Seq[StackTraceElement] => Boolean
   private case class Problem(name: String, description: String, uri: Option[String], stackTraceFilter: StackTraceFilter)
   private object Problem {
+    @nowarn("msg=deprecated")
+    val Jdk21OrNewer = Runtime.version().major() >= 21
+
     val WellKnownProblems: Seq[Problem] = Seq(
       Problem(
         "Thread.sleep",
         "Thread.sleep blocks a thread. Use system.scheduler.scheduleOnce or akka.pattern.after to continue processing asynchronously after a delay.",
         None,
-        topFrameIs(classMethod("java.lang.Thread.sleep"))),
+        if (Jdk21OrNewer) topFrameIs(classMethod("java.lang.Thread.sleep0")) // native method for loom
+        else topFrameIs(classMethod("java.lang.Thread.sleep"))),
       Problem(
         "Await",
         "Await.ready / Await.result blocks a thread. Use Future.map and other combinators to continue processing asynchronously after a Future is completed.",
