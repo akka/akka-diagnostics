@@ -1,5 +1,7 @@
 # Akka Diagnostics
 
+The Akka family of projects is managed by teams at [Lightbend](https://lightbend.com/) with help from the community.
+
 Akka Diagnostics is a suite of useful components that complement Akka.
 
 ## Akka Thread Starvation Detector
@@ -22,4 +24,4 @@ For questions please use the [discuss.akka.io](https://discuss.akka.io).
 
 ## License
 
-Akka Diagnostics is licensed under the Business Source License 1.1, see LICENSE.
+Akka is licensed under the Business Source License 1.1, please see the [Akka License FAQ](https://www.lightbend.com/akka/license-faq).
