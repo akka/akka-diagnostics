@@ -4,16 +4,16 @@
 import sbt._
 
 object Dependencies {
-  val Scala213 = "2.13.12"
-  val Scala3 = "3.3.1"
+  val Scala213 = "2.13.14"
+  val Scala3 = "3.3.3"
   val CrossScalaVersions = Seq(Scala213, Scala3)
 
-  val AkkaVersion = "2.9.0"
+  val AkkaVersion = "2.9.3"
   val AkkaVersionInDocs = AkkaVersion.take(3)
   val AkkaHttpVersionInDocs = "10.6"
-  val ScalaTestVersion = "3.2.15"
+  val ScalaTestVersion = "3.2.18"
 
-  val commonsText = "org.apache.commons" % "commons-text" % "1.10.0" // ApacheV2
+  val commonsText = "org.apache.commons" % "commons-text" % "1.11.0" // ApacheV2
 
   object Compile {
     val akkaActor = "com.typesafe.akka" %% "akka-actor" % AkkaVersion
