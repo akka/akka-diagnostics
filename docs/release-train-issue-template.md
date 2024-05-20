@@ -41,7 +41,7 @@ Key links:
          git status
          git add docs/akka-diagnostics/current docs/akka-diagnostics/$VERSION$
          git add api/akka-diagnostics/current api/akka-diagnostics/$VERSION$
-         git commit -m "Akka Diagnostics R2DBC $VERSION$"
+         git commit -m "Akka Diagnostics $VERSION$"
          ```
 
 ### Announcements
