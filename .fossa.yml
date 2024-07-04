@@ -5,3 +5,4 @@ version: 3
 paths:
   exclude:
     - ./docs
+    - ./akka-diagnostics/src/test
