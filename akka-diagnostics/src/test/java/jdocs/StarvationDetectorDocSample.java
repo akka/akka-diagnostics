@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2023 Lightbend Inc. <https://www.lightbend.com>
+ * Copyright (C) 2024 Lightbend Inc. <https://www.lightbend.com>
  */
+
 package jdocs;
 
 import akka.actor.typed.ActorSystem;
