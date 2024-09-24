@@ -29,7 +29,7 @@ Key links:
 ### Check availability
 
 - [ ] Check [API](https://doc.akka.io/api/akka-diagnostics/$VERSION$/) documentation
-- [ ] Check [reference](https://doc.akka.io/docs/akka-diagnostics/$VERSION$/) documentation. Check that the reference docs were deployed and show a version warning (see section below on how to fix the version warning).
+- [ ] Check [reference](https://doc.akka.io/libraries/akka-diagnostics/$VERSION$/) documentation. Check that the reference docs were deployed and show a version warning (see section below on how to fix the version warning).
 - [ ] Check the release on https://repo.akka.io/maven/com/lightbend/akka/akka-diagnostics_2.13/$VERSION$/akka-diagnostics_2.13-$VERSION$.pom
 
 ### When everything is on https://repo.akka.io/maven
@@ -39,7 +39,7 @@ Key links:
          ```
          cd ~/www
          git status
-         git add docs/akka-diagnostics/current docs/akka-diagnostics/$VERSION$
+         git add libraries/akka-diagnostics/current libraries/akka-diagnostics/$VERSION$
          git add api/akka-diagnostics/current api/akka-diagnostics/$VERSION$
          git commit -m "Akka Diagnostics $VERSION$"
          ```
@@ -50,7 +50,6 @@ For important patch releases, and only if critical issues have been fixed:
 
 - [ ] Send a release notification to [Lightbend discuss](https://discuss.akka.io)
 - [ ] Tweet using the [@akkateam](https://twitter.com/akkateam/) account (or ask someone to) about the new release
-- [ ] Announce on [Gitter akka/akka](https://gitter.im/akka/akka)
 - [ ] Announce internally (with links to Tweet, discuss)
 
 For minor or major releases:
@@ -59,5 +58,5 @@ For minor or major releases:
 
 ### Afterwards
 
-- [ ] Update [akka-dependencies bom](https://github.com/lightbend/akka-dependencies) and version for [Akka module versions](https://doc.akka.io/docs/akka-dependencies/current/) in [akka-dependencies repo](https://github.com/akka/akka-dependencies)
+- [ ] Update the akka-dependencies bom and version for [Akka module versions](https://doc.akka.io/libraries/akka-dependencies/current/) in [akka-dependencies repo](https://github.com/akka/akka-dependencies)
 - Close this issue

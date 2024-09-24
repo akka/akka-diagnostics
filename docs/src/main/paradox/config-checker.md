@@ -13,7 +13,7 @@ seen in mailing lists and customer consulting.
 
 The advice the tool can give is of course of general character and there will always be
 cases where it is wrong and the given configuration is appropriate for the specific
-system. Do not hesitate to use [Lightbend Support](http://support.lightbend.com/) if
+system. Do not hesitate to use [Lightbend Support](https://support.lightbend.com/) if
 you need more advice or discussion.
 
 As a general rule; use default values until you have a problem or are sure that the
@@ -305,7 +305,7 @@ Don't use too small pool size [1] for the default-remote-dispatcher-size. Relate
 ### create-actor-remotely 
 
 ```
-Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/docs/akka/current/remoting.html#creating-actors-remotely Related config properties: [akka.actor.deployment."/...".remote"]. You may disable this check by adding [create-actor-remotely] to configuration string list akka.diagnostics.checker.disabled-checks.
+Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/libraries/akka-core/current/remoting.html#creating-actors-remotely Related config properties: [akka.actor.deployment."/...".remote"]. You may disable this check by adding [create-actor-remotely] to configuration string list akka.diagnostics.checker.disabled-checks.
 ```
 
 ### remote-artery-disabled

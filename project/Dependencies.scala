@@ -4,12 +4,16 @@
 import sbt._
 
 object Dependencies {
+  // Java Platform version for JavaDoc creation
+  // sync with Java version in .github/workflows/publish.yml#documentation
+  val JavaDocLinkVersion = 17
+
   val Scala213 = "2.13.14"
   val Scala3 = "3.3.3"
   val CrossScalaVersions = Seq(Scala213, Scala3)
 
   val AkkaVersion = "2.9.3"
-  val AkkaVersionInDocs = AkkaVersion.take(3)
+  val AkkaVersionInDocs = VersionNumber(AkkaVersion).numbers match { case Seq(major, minor, _*) => s"$major.$minor" }
   val AkkaHttpVersionInDocs = "10.6"
   val ScalaTestVersion = "3.2.18"
 

@@ -19,7 +19,7 @@ inThisBuild(
   Seq(
     organization := "com.lightbend.akka",
     organizationName := "Lightbend Inc.",
-    homepage := Some(url("https://doc.akka.io/docs/akka-diagnostics/current")),
+    homepage := Some(url("https://doc.akka.io/libraries/akka-diagnostics/current")),
     scmInfo := Some(
       ScmInfo(url("https://github.com/akka/akka-diagnostics"), "https://github.com/akka/akka-diagnostics.git")),
     startYear := Some(2022),
@@ -36,7 +36,7 @@ inThisBuild(
       val tagOrBranch =
         if (isSnapshot.value) "main"
         else "v" + version.value
-      Seq(("BUSL-1.1", url(s"https://raw.githubusercontent.com/akka/akka-diagnostics/${tagOrBranch}/LICENSE")))
+      Seq(("BUSL-1.1", url(s"https://github.com/akka/akka-diagnostics/blob/${tagOrBranch}/LICENSE")))
     },
     description := "Akka diagnostics tools and utilities",
     // append -SNAPSHOT to version when isSnapshot
@@ -63,6 +63,29 @@ lazy val common: Seq[Setting[_]] =
         scalacOptionsBase ++: Seq("-Xfatal-warnings", "-Xlint", "-Ywarn-dead-code", "-Wconf:cat=deprecation:info")
       else
         scalacOptionsBase
+    },
+    Compile / doc / scalacOptions := scalacOptions.value ++ Seq(
+      "-doc-title",
+      "Akka Dependencies",
+      "-doc-version",
+      version.value,
+      "-sourcepath",
+      (ThisBuild / baseDirectory).value.toString,
+      "-doc-source-url", {
+        val branch = if (isSnapshot.value) "main" else s"v${version.value}"
+        s"https://github.com/akka/akka-diagnostics/tree/${branch}€{FILE_PATH_EXT}#L€{FILE_LINE}"
+      },
+      "-doc-canonical-base-url",
+      "https://doc.akka.io/api/akka-diagnostics/current/")
+    ++ {
+      // make use of https://github.com/scala/scala/pull/8663
+      if (scalaBinaryVersion.value.startsWith("3")) {
+        Seq(
+          s"-external-mappings:https://docs.oracle.com/en/java/javase/${Dependencies.JavaDocLinkVersion}/docs/api/java.base/")
+      } else
+        Seq(
+          "-jdk-api-doc-base",
+          s"https://docs.oracle.com/en/java/javase/${Dependencies.JavaDocLinkVersion}/docs/api/java.base/")
     },
     Test / logBuffered := false,
     Test / parallelExecution := false,
@@ -115,8 +138,8 @@ lazy val docs = (project in file("docs"))
     Paradox / siteSubdirName := s"docs/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
     Compile / paradoxProperties ++= Map(
       "version" -> version.value,
-      "project.url" -> "https://doc.akka.io/docs/akka-diagnostics/current/",
-      "canonical.base_url" -> "https://doc.akka.io/docs/akka-diagnostics/current",
+      "project.url" -> "https://doc.akka.io/libraries/akka-diagnostics/current/",
+      "canonical.base_url" -> "https://doc.akka.io/libraries/akka-diagnostics/current",
       "akka.version" -> Dependencies.AkkaVersion,
       "scala.version" -> scalaVersion.value,
       "scala.binaryVersion" -> scalaBinaryVersion.value,
@@ -124,9 +147,9 @@ lazy val docs = (project in file("docs"))
       "extref.javadoc.base_url" -> s"/japi/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
       "scaladoc.akka.persistence.gdpr.base_url" -> s"/api/akka-diagnostics/${if (isSnapshot.value) "snapshot"
       else version.value}",
-      "extref.akka.base_url" -> s"https://doc.akka.io/docs/akka/${Dependencies.AkkaVersionInDocs}/%s",
+      "extref.akka.base_url" -> s"https://doc.akka.io/libraries/akka-core/${Dependencies.AkkaVersionInDocs}/%s",
       "scaladoc.akka.base_url" -> s"https://doc.akka.io/api/akka/${Dependencies.AkkaVersionInDocs}",
-      "extref.akka-http.base_url" -> s"https://doc.akka.io/docs/akka-http/${Dependencies.AkkaHttpVersionInDocs}/%s",
+      "extref.akka-http.base_url" -> s"https://doc.akka.io/libraries/akka-http/${Dependencies.AkkaHttpVersionInDocs}/%s",
       "scaladoc.akka.http.base_url" -> s"https://doc.akka.io/api/akka-http/${Dependencies.AkkaHttpVersionInDocs}/",
       "snip.github_link" -> "false"),
     ApidocPlugin.autoImport.apidocRootPackage := "akka",
