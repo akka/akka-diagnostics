@@ -867,7 +867,7 @@ class ConfigChecker(system: ExtendedActorSystem, config: Config, reference: Conf
         warn(
           checkerKey,
           path,
-          "Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/docs/akka/current/remoting.html#creating-actors-remotely")
+          "Deploying an actor remotely is deprecated and not supported. As per https://doc.akka.io/libraries/akka-core/current/remoting.html#creating-actors-remotely")
       else Nil
     }
 

@@ -14,7 +14,7 @@ The Akka Config Checker tries to help you by finding potential configuration iss
 
 ## Documentation
 
-The documentation can be found [here](https://doc.akka.io/docs/akka-diagnostics/current/index.html).
+The documentation can be found [here](https://doc.akka.io/libraries/akka-diagnostics/current/index.html).
 
 ## Project status
 
