@@ -12,9 +12,9 @@ object Dependencies {
   val Scala3 = "3.3.3"
   val CrossScalaVersions = Seq(Scala213, Scala3)
 
-  val AkkaVersion = "2.9.3"
+  val AkkaVersion = "2.10.0-M1"
   val AkkaVersionInDocs = VersionNumber(AkkaVersion).numbers match { case Seq(major, minor, _*) => s"$major.$minor" }
-  val AkkaHttpVersionInDocs = "10.6"
+  val AkkaHttpVersionInDocs = "10.7"
   val ScalaTestVersion = "3.2.18"
 
   val commonsText = "org.apache.commons" % "commons-text" % "1.11.0" // ApacheV2

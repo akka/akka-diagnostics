@@ -96,7 +96,7 @@ lazy val common: Seq[Setting[_]] =
     testOptions += Tests.Argument(TestFrameworks.JUnit, "-v", "-a"),
     Test / fork := true, // some non-heap memory is leaking
     Test / javaOptions ++= {
-      import scala.collection.JavaConverters._
+      import scala.jdk.CollectionConverters._
       val akkaProperties = System.getProperties.stringPropertyNames.asScala.toList.collect {
         case key: String if key.startsWith("akka.") => "-D" + key + "=" + System.getProperty(key)
       }
