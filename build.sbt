@@ -135,7 +135,7 @@ lazy val docs = (project in file("docs"))
     Preprocess / sourceDirectory := (LocalRootProject / ScalaUnidoc / unidoc / target).value,
     previewPath := (Paradox / siteSubdirName).value,
     paradoxGroups := Map("Languages" -> Seq("Java", "Scala")),
-    Paradox / siteSubdirName := s"docs/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
+    Paradox / siteSubdirName := s"libraries/akka-diagnostics/${if (isSnapshot.value) "snapshot" else version.value}",
     Compile / paradoxProperties ++= Map(
       "version" -> version.value,
       "project.url" -> "https://doc.akka.io/libraries/akka-diagnostics/current/",
