@@ -26,7 +26,7 @@ inThisBuild(
     developers += Developer(
       "contributors",
       "Contributors",
-      "https://gitter.im/akka/dev",
+      "akka.official@gmail.com",
       url("https://github.com/akka/akka-diagnostics/graphs/contributors")),
     releaseNotesURL := (
       if (isSnapshot.value) None
