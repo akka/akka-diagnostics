@@ -8,11 +8,11 @@ object Dependencies {
   // sync with Java version in .github/workflows/publish.yml#documentation
   val JavaDocLinkVersion = 17
 
-  val Scala213 = "2.13.14"
+  val Scala213 = "2.13.15"
   val Scala3 = "3.3.3"
   val CrossScalaVersions = Seq(Scala213, Scala3)
 
-  val AkkaVersion = "2.10.0"
+  val AkkaVersion = "2.10.5"
   val AkkaVersionInDocs = VersionNumber(AkkaVersion).numbers match { case Seq(major, minor, _*) => s"$major.$minor" }
   val AkkaHttpVersionInDocs = "10.7"
   val ScalaTestVersion = "3.2.18"
