@@ -13,7 +13,7 @@ permissions:
 jobs:
   check-code-style:
     name: Checks
-    runs-on: ubuntu-22.04
+    runs-on: Akka-Default
     if: github.event.repository.fork == false
     steps:
       - name: Checkout
@@ -48,7 +48,7 @@ jobs:
           
   test:
     name: Run tests
-    runs-on: ubuntu-22.04
+    runs-on: Akka-Default
     if: github.event.repository.fork == false
     strategy:
       fail-fast: false

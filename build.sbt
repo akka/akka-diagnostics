@@ -42,10 +42,10 @@ inThisBuild(
     // append -SNAPSHOT to version when isSnapshot
     dynverSonatypeSnapshots := true,
     // add snapshot repo when Akka version overriden
-    resolvers += "Akka library repository".at("https://repo.akka.io/maven"),
+    resolvers += "Akka library repository".at("https://repo.akka.io/maven/github_actions"),
     resolvers ++=
       (if (System.getProperty("override.akka.version") != null)
-         Seq("Akka library snapshot repository".at("https://repo.akka.io/snapshots"))
+         Seq("Akka library snapshot repository".at("https://repo.akka.io/snapshots/github_actions"))
        else Seq.empty)))
 
 lazy val common: Seq[Setting[_]] =
