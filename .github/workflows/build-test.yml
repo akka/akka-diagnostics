@@ -57,6 +57,7 @@ jobs:
           - { jdkVersion: "1.11.0", jvmName: "temurin:1.11.0" }
           - { jdkVersion: "1.17.0", jvmName: "temurin:1.17.0" }
           - { jdkVersion: "1.21.0", jvmName: "temurin:1.21" }
+          - { jdkVersion: "1.25.0", jvmName: "temurin:1.25" }
 
     steps:
       - name: Checkout
