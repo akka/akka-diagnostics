@@ -23,7 +23,7 @@ import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.LockSupport
 import java.util.function.BooleanSupplier
-import scala.annotation.nowarn
+
 import scala.concurrent.ExecutionContext
 import scala.concurrent.duration.FiniteDuration
 import scala.concurrent.duration._
@@ -485,15 +485,17 @@ object StarvationDetector {
   private type StackTraceFilter = Seq[StackTraceElement] => Boolean
   private case class Problem(name: String, description: String, uri: Option[String], stackTraceFilter: StackTraceFilter)
   private object Problem {
-    @nowarn("msg=deprecated")
-    val Jdk21OrNewer = Runtime.version().major() >= 21
+
+    val Jdk21 = Runtime.version().feature() == 21
+    val Jdk25OrNewer = Runtime.version().feature() >= 25
 
     val WellKnownProblems: Seq[Problem] = Seq(
       Problem(
         "Thread.sleep",
         "Thread.sleep blocks a thread. Use system.scheduler.scheduleOnce or akka.pattern.after to continue processing asynchronously after a delay.",
         None,
-        if (Jdk21OrNewer) topFrameIs(classMethod("java.lang.Thread.sleep0")) // native method for loom
+        if (Jdk21) topFrameIs(classMethod("java.lang.Thread.sleep0")) // native method for loom
+        else if (Jdk25OrNewer) topFrameIs(classMethod("java.lang.Thread.sleepNanos0")) // native method for loom
         else topFrameIs(classMethod("java.lang.Thread.sleep"))),
       Problem(
         "Await",
