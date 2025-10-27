@@ -80,12 +80,9 @@ lazy val common: Seq[Setting[_]] =
     ++ {
       // make use of https://github.com/scala/scala/pull/8663
       if (scalaBinaryVersion.value.startsWith("3")) {
-        Seq(
-          s"-external-mappings:https://docs.oracle.com/en/java/javase/${Dependencies.JavaDocLinkVersion}/docs/api/java.base/")
+        Seq(s"-external-mappings:https://docs.oracle.com/en/java/javase/${Dependencies.JavaDocLinkVersion}/docs/api")
       } else
-        Seq(
-          "-jdk-api-doc-base",
-          s"https://docs.oracle.com/en/java/javase/${Dependencies.JavaDocLinkVersion}/docs/api/java.base/")
+        Seq("-jdk-api-doc-base", s"https://docs.oracle.com/en/java/javase/${Dependencies.JavaDocLinkVersion}/docs/api")
     },
     Test / logBuffered := false,
     Test / parallelExecution := false,

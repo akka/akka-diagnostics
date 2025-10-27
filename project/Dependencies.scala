@@ -5,11 +5,10 @@ import sbt._
 
 object Dependencies {
   // Java Platform version for JavaDoc creation
-  // sync with Java version in .github/workflows/publish.yml#documentation
-  val JavaDocLinkVersion = 17
+  lazy val JavaDocLinkVersion = scala.util.Properties.javaSpecVersion
 
-  val Scala213 = "2.13.15"
-  val Scala3 = "3.3.3"
+  val Scala213 = "2.13.17"
+  val Scala3 = "3.3.7"
   val CrossScalaVersions = Seq(Scala213, Scala3)
 
   val AkkaVersion = "2.10.5"
