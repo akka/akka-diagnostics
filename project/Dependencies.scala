@@ -11,7 +11,7 @@ object Dependencies {
   val Scala3 = "3.3.7"
   val CrossScalaVersions = Seq(Scala213, Scala3)
 
-  val AkkaVersion = "2.10.5"
+  val AkkaVersion = "2.10.11"
   val AkkaVersionInDocs = VersionNumber(AkkaVersion).numbers match { case Seq(major, minor, _*) => s"$major.$minor" }
   val AkkaHttpVersionInDocs = "10.7"
   val ScalaTestVersion = "3.2.18"

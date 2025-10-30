@@ -19,6 +19,7 @@ inThisBuild(
   Seq(
     organization := "com.lightbend.akka",
     organizationName := "Lightbend Inc.",
+    organizationHomepage := Some(url("https://akka.io")),
     homepage := Some(url("https://doc.akka.io/libraries/akka-diagnostics/current")),
     scmInfo := Some(
       ScmInfo(url("https://github.com/akka/akka-diagnostics"), "https://github.com/akka/akka-diagnostics.git")),
@@ -54,7 +55,7 @@ lazy val common: Seq[Setting[_]] =
     scalaVersion := Dependencies.CrossScalaVersions.head,
     crossVersion := CrossVersion.binary,
     scalafmtOnCompile := true,
-    headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2024 Lightbend Inc. <https://www.lightbend.com>""")),
+    headerLicense := Some(HeaderLicense.Custom("""Copyright (C) 2025 Lightbend Inc. <https://akka.io>""")),
     // Setting javac options in common allows IntelliJ IDEA to import them automatically
     Compile / javacOptions ++= Seq("-encoding", "UTF-8", "--release", "11"),
     Compile / scalacOptions ++= {
