@@ -1,8 +1,19 @@
-# Akka Diagnostics
+Akka
+====
+*Akka is a powerful platform that simplifies building and operating highly responsive, resilient, and scalable services.*
 
-The Akka family of projects is managed by teams at [Lightbend](https://lightbend.com/) with help from the community.
 
-Akka Diagnostics is a suite of useful components that complement Akka.
+The platform consists of
+* the [**Akka SDK**](https://doc.akka.io/java/index.html) for straightforward, rapid development with AI assist and automatic clustering. Services built with the Akka SDK are automatically clustered and can be deployed on any infrastructure.
+* and [**Akka Automated Operations**](https://doc.akka.io/operations/akka-platform.html), a managed solution that handles everything for Akka SDK services from auto-elasticity to multi-region high availability running safely within your VPC.
+
+The **Akka SDK** and **Akka Automated Operations** are built upon the foundational [**Akka libraries**](https://doc.akka.io/libraries/akka-dependencies/current/), providing the building blocks for distributed systems.
+
+
+Akka Diagnostics
+================
+
+Akka Diagnostics is a suite of useful components that complement Akka libraries.
 
 ## Akka Thread Starvation Detector
 
@@ -12,15 +23,17 @@ The Akka Thread Starvation Detector is a diagnostic tool that monitors the dispa
 
 The Akka Config Checker tries to help you by finding potential configuration issues. It is based on knowledge that the Akka Team has gathered from typical misunderstanding seen in mailing lists and customer consulting.
 
-## Documentation
+Reference Documentation
+-----------------------
 
-The documentation can be found [here](https://doc.akka.io/libraries/akka-diagnostics/current/index.html).
+The reference documentation for all Akka libraries is available via [doc.akka.io/libraries/](https://doc.akka.io/libraries/), details for the Akka Diagnostics library
+for [Scala](https://doc.akka.io/libraries/akka-diagnostics/current/?language=scala) and [Java](https://doc.akka.io/libraries/akka-diagnostics/current/?language=java).
+
+The current versions of all Akka libraries are listed on the [Akka Dependencies](https://doc.akka.io/libraries/akka-dependencies/current/) page. Releases of the Akka Diagnostics library in this repository are listed on the [GitHub releases](https://github.com/akka/akka-diagnostics/releases) page.
 
 ## Project status
 
-This library is ready to be used in production, APIs are stable, and the Lightbend subscription covers support for this project.
-
-For questions please use the [discuss.akka.io](https://discuss.akka.io).
+This library is ready to be used in production, APIs are stable, and the Akka subscription covers support for this project.
 
 ## License
 
