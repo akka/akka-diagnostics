@@ -16,7 +16,7 @@ object Dependencies {
   val AkkaHttpVersionInDocs = "10.7"
   val ScalaTestVersion = "3.2.18"
 
-  val commonsText = "org.apache.commons" % "commons-text" % "1.11.0" // ApacheV2
+  val commonsText = "org.apache.commons" % "commons-text" % "1.14.0" // ApacheV2
 
   object Compile {
     val akkaActor = "com.typesafe.akka" %% "akka-actor" % AkkaVersion
