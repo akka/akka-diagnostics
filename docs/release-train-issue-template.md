@@ -30,7 +30,7 @@ Key links:
 
 - [ ] Check [API](https://doc.akka.io/api/akka-diagnostics/$VERSION$/) documentation
 - [ ] Check [reference](https://doc.akka.io/libraries/akka-diagnostics/$VERSION$/) documentation. Check that the reference docs were deployed and show a version warning (see section below on how to fix the version warning).
-- [ ] Check the release on https://repo.akka.io/maven/com/lightbend/akka/akka-diagnostics_2.13/$VERSION$/akka-diagnostics_2.13-$VERSION$.pom
+- [ ] Check the release `mvn dependency:get -Dartifact=com.lightbend.akka:akka-diagnostics_2.13:$VERSION$`
 
 ### When everything is on https://repo.akka.io/maven
 - [ ] Log into `gustav.akka.io` as `akkarepo`
