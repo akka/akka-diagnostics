@@ -25,7 +25,7 @@ jobs:
           fetch-depth: 0
 
       - name: Checkout Global Scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           repository: akka/github-actions-scripts
           path: scripts
@@ -80,7 +80,7 @@ jobs:
           fetch-depth: 0
 
       - name: Checkout Global Scripts
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           repository: akka/github-actions-scripts
           path: scripts
