@@ -42,6 +42,8 @@ inThisBuild(
     description := "Akka diagnostics tools and utilities",
     // append -SNAPSHOT to version when isSnapshot
     dynverSonatypeSnapshots := true
+  )
+)
 
 lazy val common: Seq[Setting[_]] =
   Seq(
