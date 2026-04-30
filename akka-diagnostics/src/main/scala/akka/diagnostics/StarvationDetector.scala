@@ -307,7 +307,7 @@ object StarvationDetector {
                 }
               case Failure(ex) =>
                 ex.getClass.getName match {
-                  case "java.lang.reflect.InaccessibleObjectException" => //FIXME avoid using class name when JDK 8 is not supported
+                  case "java.lang.reflect.InaccessibleObjectException" => // FIXME avoid using class name when JDK 8 is not supported
                     throw InaccessibleObjectException(ex.getMessage, ex.getCause) // stopping Starvation Detector
                   case _ => s"[Could not get thread info because ${ex.toString}]"
                 }
