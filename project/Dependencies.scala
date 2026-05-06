@@ -14,7 +14,7 @@ object Dependencies {
   val AkkaVersion = "2.10.11"
   val AkkaVersionInDocs = VersionNumber(AkkaVersion).numbers match { case Seq(major, minor, _*) => s"$major.$minor" }
   val AkkaHttpVersionInDocs = "10.7"
-  val ScalaTestVersion = "3.2.18"
+  val ScalaTestVersion = "3.2.20"
 
   val commonsText = "org.apache.commons" % "commons-text" % "1.15.0" // ApacheV2
 
