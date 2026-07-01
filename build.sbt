@@ -114,6 +114,7 @@ lazy val `akka-diagnostics` = (project in file("akka-diagnostics"))
   .settings(common)
   .settings(libraryDependencies ++= Dependencies.akkaDiagnostics)
   .settings(AutomaticModuleName.settings("akka.diagnostics"))
+  .enablePlugins(ArtifactBomPlugin)
   .disablePlugins(CiReleasePlugin)
 
 lazy val docs = (project in file("docs"))

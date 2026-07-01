@@ -21,18 +21,9 @@ jobs:
         with:
           # we don't know what commit the last tag was it's safer to get entire repo so previousStableVersion resolves
           fetch-depth: 0
-      
-      - name: Checkout Global Scripts
-        uses: actions/checkout@v6
-        with:
-          repository: akka/github-actions-scripts
-          path: scripts
-          fetch-depth: 0
-          
-      - name: Setup global resolver
-        run: |
-          chmod +x ./scripts/setup_global_resolver.sh
-          ./scripts/setup_global_resolver.sh
+
+      - name: Akka resolver setup
+        uses: akka/github-actions-scripts/setup_global_resolver@main
 
       - name: Cache Coursier cache
         # https://github.com/coursier/cache-action/releases
@@ -65,18 +56,9 @@ jobs:
         with:
           # we don't know what commit the last tag was it's safer to get entire repo so previousStableVersion resolves
           fetch-depth: 0
-      
-      - name: Checkout Global Scripts
-        uses: actions/checkout@v6
-        with:
-          repository: akka/github-actions-scripts
-          path: scripts
-          fetch-depth: 0
 
-      - name: Setup global resolver
-        run: |
-          chmod +x ./scripts/setup_global_resolver.sh
-          ./scripts/setup_global_resolver.sh
+      - name: Akka resolver setup
+        uses: akka/github-actions-scripts/setup_global_resolver@main
 
       - name: Set up JDK 25
         # https://github.com/coursier/setup-action/releases
