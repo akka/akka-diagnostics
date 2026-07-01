@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   pull_request:
   schedule:
-    - cron:  '0 4 1 * *'
+    - cron: "0 4 1 * *"
 
 permissions:
   contents: read
@@ -24,17 +24,8 @@ jobs:
         with: # https://github.com/olafurpg/setup-scala#faster-checkout-of-big-repos
           fetch-depth: 100
 
-      - name: Checkout Global Scripts
-        uses: actions/checkout@v6
-        with:
-          repository: akka/github-actions-scripts
-          path: scripts
-          fetch-depth: 0
-
-      - name: Setup global resolver
-        run: |
-          chmod +x ./scripts/setup_global_resolver.sh
-          ./scripts/setup_global_resolver.sh
+      - name: Akka resolver setup
+        uses: akka/github-actions-scripts/setup_global_resolver@main
 
       - name: Fetch tags
         run: git fetch --depth=100 origin +refs/tags/*:refs/tags/*
