@@ -6,7 +6,7 @@ addSbtPlugin("io.akka" % "sbt-paradox-akka" % "25.10.2")
 addSbtPlugin("com.github.sbt" % "sbt-site" % "1.7.0")
 addSbtPlugin("com.github.sbt" % "sbt-site-paradox" % "1.7.0")
 addSbtPlugin("com.lightbend.sbt" % "sbt-publish-rsync" % "0.3")
-addSbtPlugin("com.github.sbt" % "sbt-java-formatter" % "0.12.0")
+addSbtPlugin("com.github.sbt" % "sbt-java-formatter" % "0.14.0")
 addSbtPlugin("com.github.sbt" % "sbt-ci-release" % "1.12.1")
 addSbtPlugin("io.akka.sbt" % "sbt-artifact-bom" % "0.2.0")
 
