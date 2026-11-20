@@ -12,6 +12,8 @@ import sbt.{ Def, _ }
 import Keys._
 import com.geirsson.CiReleasePlugin
 import com.jsuereth.sbtpgp.PgpKeys.publishSigned
+import com.jsuereth.sbtpgp.PgpKeys.signedArtifacts
+import com.jsuereth.sbtpgp.SbtPgp
 
 /**
  * For projects that are not published.
@@ -24,7 +26,7 @@ object NoPublish extends AutoPlugin {
 }
 
 object Publish extends AutoPlugin {
-  override def requires = plugins.JvmPlugin
+  override def requires = plugins.JvmPlugin && SbtPgp
   override def trigger = AllRequirements
 
   lazy val beforePublishTask = taskKey[Unit]("setup before publish")
@@ -42,6 +44,7 @@ object Publish extends AutoPlugin {
   override def projectSettings: Seq[Def.Setting[_]] = Seq(
     beforePublishTask := beforePublish(isSnapshot.value),
     publishSigned := publishSigned.dependsOn(beforePublishTask).value,
+    signedArtifacts := signedArtifacts.dependsOn(beforePublishTask).value,
     publishTo :=
       (if (isSnapshot.value)
          Some("Cloudsmith API".at("https://maven.cloudsmith.io/lightbend/akka-snapshots/"))
